@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scribe UI 定稿 · 系统原生双栏 · 深浅双模式</title>
+<style>
+  :root{
+    /* ── 原语 token ── */
+    --space-1: 4px; --space-2: 6px; --space-3: 8px;
+    --space-4: 12px; --space-5: 16px; --space-6: 20px;
+    --text-caption: 11px; --text-label: 12px; --text-body: 13px; --text-title: 15px;
+    --dur-fast: 120ms; --dur-base: 180ms;
+    --ease-out: cubic-bezier(0.16,1,0.3,1);
+    --font-ui: -apple-system, "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  /* ── 语义 token · 浅色（按系统聚焦 Spotlight 实拍取样）── */
+  .light{
+    --panel-bg: rgba(252,251,250,0.82);      /* 聚焦同款：近白高透 + 重模糊 */
+    --surface-card: rgba(255,255,255,0.66);
+    --surface-card-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --accent: #0a7aff;                        /* systemBlue，仅用于链接等少量场景 */
+    --accent-tint: rgba(10,122,255,0.14);
+    --text-1: #1c1c1e;                        /* labelColor */
+    --text-2: rgba(60,60,67,0.60);            /* secondaryLabelColor */
+    --text-3: rgba(60,60,67,0.33);            /* tertiaryLabelColor */
+    --divider: rgba(0,0,0,0.06);
+    --row-hover: rgba(0,0,0,0.045);
+    --sel-bg: rgba(0,0,0,0.075);              /* 聚焦选中行：安静灰，不用强调色 */
+    --chip-bg: rgba(255,255,255,0.80);        /* 白色胶囊 + 细阴影 */
+    --chip-shadow: 0 1px 2.5px rgba(0,0,0,0.10), 0 0 0 0.5px rgba(0,0,0,0.04);
+    --chip-on-bg: rgba(0,0,0,0.09);
+    --keycap-bg: #ffffff;                     /* 选中行右侧按键帽 */
+    --keycap-shadow: 0 1px 2px rgba(0,0,0,0.14);
+    --field-bg: rgba(0,0,0,0.05);
+    --kbd-bg: rgba(0,0,0,0.07);
+    --code-kw: #ad3da4; --code-str: #1c7a4d;  /* Xcode 浅色主题近似 */
+    --settings-bg: #f2f2f4; --settings-bar: #e8e8ea;
+    --rows-bg: #ffffff; --rows-shadow: 0 1px 3px rgba(0,0,0,0.10);
+    --rows-divider: rgba(0,0,0,0.06);
+    --tab-on-bg: rgba(0,0,0,0.08);
+    --switch-off: rgba(0,0,0,0.16);
+    --stepper-bg: #ffffff; --stepper-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    --danger: #e0382e;
+    --wallpaper: radial-gradient(120% 90% at 20% 10%, #d8e3ec 0%, #b9c8d8 38%, #8fa3bb 72%, #6e829e 100%);
+  }
+  /* ── 语义 token · 深色（同一套语义，聚焦深色形态）── */
+  .dark{
+    --panel-bg: rgba(30,30,34,0.80);
+    --surface-card: rgba(255,255,255,0.06);
+    --surface-card-shadow: 0 0 0 1px rgba(255,255,255,0.06);
+    --accent: #0a84ff;                        /* systemBlue 深色值 */
+    --accent-tint: rgba(10,132,255,0.22);
+    --text-1: rgba(255,255,255,0.90);
+    --text-2: rgba(235,235,245,0.60);
+    --text-3: rgba(235,235,245,0.32);
+    --divider: rgba(255,255,255,0.07);
+    --row-hover: rgba(255,255,255,0.055);
+    --sel-bg: rgba(255,255,255,0.09);
+    --chip-bg: rgba(255,255,255,0.10);
+    --chip-shadow: 0 0 0 0.5px rgba(255,255,255,0.06);
+    --chip-on-bg: rgba(255,255,255,0.18);
+    --keycap-bg: rgba(255,255,255,0.14);
+    --keycap-shadow: 0 0 0 0.5px rgba(255,255,255,0.08);
+    --field-bg: rgba(255,255,255,0.07);
+    --kbd-bg: rgba(255,255,255,0.10);
+    --code-kw: #ff7ab2; --code-str: #7ec9a5;  /* Xcode 深色主题近似 */
+    --settings-bg: #26262a; --settings-bar: #2e2e33;
+    --rows-bg: rgba(255,255,255,0.06); --rows-shadow: none;
+    --rows-divider: rgba(255,255,255,0.06);
+    --tab-on-bg: rgba(255,255,255,0.10);
+    --switch-off: rgba(255,255,255,0.18);
+    --stepper-bg: rgba(255,255,255,0.10); --stepper-shadow: none;
+    --danger: #ff6961;
+    --wallpaper: radial-gradient(120% 90% at 80% 0%, #2c3242 0%, #1b1f2b 45%, #101218 100%);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+  body{ font-family:var(--font-ui); background:#101014; color:rgba(255,255,255,0.88);
+    line-height:1.7; padding:48px 24px 96px; }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
+
+  .page{ max-width:1240px; margin:0 auto; }
+  .page > header h1{ font-size:26px; font-weight:700; letter-spacing:-0.012em; }
+  .page > header p{ color:rgba(255,255,255,0.55); font-size:14px; margin-top:8px; max-width:68ch; }
+  h2{ font-size:18px; font-weight:700; margin-top:56px; letter-spacing:-0.012em; }
+  .mock-label{ font-size:12px; color:rgba(255,255,255,0.4); margin:8px 2px 0; max-width:80ch; }
+  .duo{ display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; margin-top:16px; }
+
+  .desktop{
+    border-radius:14px; overflow:hidden;
+    outline:1px solid rgba(255,255,255,0.08); outline-offset:-1px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--wallpaper);
+  }
+
+  /* ═══════════ 主面板：双栏 ═══════════ */
+  .panel{
+    width:720px; font-size:var(--text-body); color:var(--text-1);
+    background:var(--panel-bg);
+    -webkit-backdrop-filter:blur(38px) saturate(1.8); backdrop-filter:blur(38px) saturate(1.8);
+    border-radius:22px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.34), 0 0 0 0.5px rgba(0,0,0,0.18);
+    margin:32px 0; overflow:hidden;
+  }
+  .panel .top{ padding:14px 16px 11px; border-bottom:1px solid var(--divider); }
+  .panel .field{
+    /* 聚焦式无框搜索：图标 + 大字号，无底色 */
+    display:flex; align-items:center; gap:9px; padding:2px 2px 6px;
+    color:var(--text-3); font-size:16px;
+  }
+  .panel .field .icon{ color:var(--text-2); }
+  .panel .chips{ display:flex; gap:8px; margin-top:8px; }
+  .chip{
+    font-size:var(--text-label); padding:4px 12px; border-radius:999px;
+    color:var(--text-1); background:var(--chip-bg); box-shadow:var(--chip-shadow);
+    transition:background-color var(--dur-fast) var(--ease-out);
+  }
+  .chip:hover{ background:var(--row-hover); }
+  .chip.on{ background:var(--chip-on-bg); box-shadow:none; font-weight:600; }
+
+  .panel .body{ display:flex; height:330px; }
+  .panel .listcol{ width:296px; flex:none; padding:4px 8px; border-right:1px solid var(--divider); overflow:hidden; }
+  .group{
+    font-size:var(--text-caption); font-weight:600; color:var(--text-3);
+    padding:9px 8px 4px; letter-spacing:0.02em;
+  }
+  .row{
+    display:flex; align-items:center; gap:9px; padding:7px 9px; border-radius:10px;
+    transition:background-color var(--dur-fast) var(--ease-out);
+  }
+  .row:hover{ background:var(--row-hover); }
+  .row.sel{ background:var(--sel-bg); }  /* 聚焦式安静灰选中，文字不反白 */
+  .acthint{ font-size:var(--text-caption); color:var(--text-3); }
+  .keycap{
+    font-size:10px; padding:2px 7px; border-radius:6px;
+    background:var(--keycap-bg); box-shadow:var(--keycap-shadow); color:var(--text-2);
+  }
+  .row .appicon{ width:22px; height:22px; border-radius:5px; flex:none;
+    display:flex; align-items:center; justify-content:center; font-size:12px;
+    outline:1px solid rgba(0,0,0,0.08); outline-offset:-1px; background:#fff; }
+  .row .txt{ flex:1; min-width:0; }
+  .row .main{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row .main.mono{ font-family:var(--font-mono); font-size:12px; }
+  .row .sub{ font-size:var(--text-caption); color:var(--text-2);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row .time{ font-size:var(--text-caption); color:var(--text-3); flex:none;
+    font-variant-numeric:tabular-nums; }
+  .row .thumb{ width:36px; height:26px; border-radius:4px; flex:none;
+    background:linear-gradient(135deg,#7ba7c9,#3e6a92);
+    outline:1px solid rgba(0,0,0,0.1); outline-offset:-1px; }
+  .pin-dot{ color:#e6a23c; font-size:11px; }
+
+  .preview{ flex:1; padding:14px 16px; display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .preview .content{
+    flex:1; background:var(--surface-card); border-radius:8px;
+    box-shadow:var(--surface-card-shadow);
+    padding:13px 14px; overflow:hidden;
+    font-family:var(--font-mono); font-size:12px; line-height:1.8; color:var(--text-1);
+  }
+  .preview .content .cm{ color:var(--text-3); }
+  .preview .content .kw{ color:var(--code-kw); }
+  .preview .content .str{ color:var(--code-str); }
+  .meta{ display:grid; grid-template-columns:56px 1fr; gap:3px 12px; font-size:var(--text-label); }
+  .meta dt{ color:var(--text-3); }
+  .meta dd{ color:var(--text-2); font-variant-numeric:tabular-nums; }
+
+  .hints{ display:flex; gap:14px; padding:8px 14px; border-top:1px solid var(--divider);
+    font-size:var(--text-caption); color:var(--text-3); }
+  .hints .grow{ flex:1; }
+  kbd{ font-family:var(--font-ui); font-size:10px; padding:1px 5px; border-radius:4px;
+    background:var(--kbd-bg); color:inherit; }
+
+  /* ═══════════ 设置窗口 ═══════════ */
+  .settings{
+    width:460px; border-radius:12px; overflow:hidden; font-size:var(--text-body);
+    background:var(--settings-bg); color:var(--text-1);
+    box-shadow:0 18px 50px rgba(0,0,0,0.35), 0 0 0 0.5px rgba(0,0,0,0.2);
+  }
+  .titlebar{ display:flex; align-items:center; gap:6px; padding:11px 12px; background:var(--settings-bar); }
+  .titlebar .dot{ width:11px; height:11px; border-radius:50%; }
+  .titlebar .dot:nth-child(1){ background:#ff5f57; }
+  .titlebar .dot:nth-child(2){ background:#febc2e; }
+  .titlebar .dot:nth-child(3){ background:#28c840; }
+  .titlebar .t{ flex:1; text-align:center; font-weight:600; margin-right:45px; }
+  .tabs{ display:flex; justify-content:center; gap:4px; padding:0 12px 10px; background:var(--settings-bar); }
+  .tab{ display:flex; flex-direction:column; align-items:center; gap:2px;
+    font-size:var(--text-caption); padding:5px 12px; border-radius:8px; color:var(--text-2); }
+  .tab.on{ background:var(--tab-on-bg); color:var(--accent); }
+  .section{ padding:14px 16px 18px; }
+  .grouptitle{ font-size:var(--text-caption); font-weight:600; color:var(--text-3); margin:10px 2px 6px; }
+  .rows{ background:var(--rows-bg); border-radius:10px; overflow:hidden; box-shadow:var(--rows-shadow); }
+  .srow{ display:flex; align-items:center; gap:10px; padding:10px 14px; }
+  .srow + .srow{ border-top:1px solid var(--rows-divider); }
+  .srow .lbl{ flex:1; }
+  .srow .note{ font-size:var(--text-caption); color:var(--text-2); display:block; margin-top:1px; }
+  .val{ font-size:var(--text-label); color:var(--text-2); font-variant-numeric:tabular-nums; }
+  .hotkey{ font-size:var(--text-label); padding:3px 10px; border-radius:6px;
+    background:var(--kbd-bg); font-weight:600; }
+  .switch{ width:38px; height:22px; border-radius:11px; position:relative; flex:none; }
+  .switch::after{ content:""; position:absolute; top:2px; width:18px; height:18px;
+    border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.25); }
+  .switch.on{ background:#34c759; } .switch.on::after{ right:2px; }
+  .switch.off{ background:var(--switch-off); } .switch.off::after{ left:2px; }
+  .stepper{ display:flex; align-items:center; gap:8px; }
+  .stepper .btn{ width:22px; height:22px; border-radius:6px; display:flex; align-items:center;
+    justify-content:center; font-size:13px; background:var(--stepper-bg); box-shadow:var(--stepper-shadow); }
+  .danger{ color:var(--danger); }
+
+  /* token 表 */
+  .tokens{ margin-top:14px; overflow-x:auto; }
+  .tokens table{ border-collapse:collapse; font-size:12px; min-width:840px; }
+  .tokens th, .tokens td{ text-align:left; padding:6px 14px 6px 0;
+    border-bottom:1px solid rgba(255,255,255,0.07); }
+  .tokens th{ color:rgba(255,255,255,0.4); font-weight:600; font-size:11px; }
+  .tokens td{ color:rgba(255,255,255,0.72); }
+  .tokens code{ font-family:var(--font-mono); font-size:11px; color:rgba(255,255,255,0.85); }
+  .sw{ display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-1px;
+    margin-right:6px; outline:1px solid rgba(255,255,255,0.15); outline-offset:-1px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <h1>Scribe · UI 定稿</h1>
+  <p>方向：<b>A 系统原生材质 × B 双栏布局</b>，深浅双模式随系统切换，材质/色值/透明度按
+     <b>macOS 聚焦（Spotlight）实拍取样</b>：近白高透重模糊、大圆角、选中为安静灰（不用强调色反白）、
+     白色胶囊 chips、无框搜索。左列表右详情，720×420pt 居中唤起。权威 token 规格在 <b>docs/ui/tokens.md</b>，本页为视觉原型（与其同步维护）。悬停可看交互状态。</p>
+</header>
+
+<h2>主面板 · 720×420pt · 浅色</h2>
+<div class="light">
+<div class="desktop" style="height:520px;">
+  <div class="panel">
+    <div class="top">
+      <div class="field"><span class="icon">⌕</span><span>搜索剪贴板历史</span></div>
+      <div class="chips">
+        <span class="chip on">全部</span><span class="chip">今天</span><span class="chip">昨天</span>
+        <span class="chip">本周</span><span class="chip">上周</span><span class="chip">本月</span>
+      </div>
+    </div>
+    <div class="body">
+      <div class="listcol">
+        <div class="group">置顶</div>
+        <div class="row">
+          <div class="appicon">🏢</div>
+          <div class="txt"><div class="main">上海市徐汇区漕溪北路 331 号中金国际…</div></div>
+          <span class="pin-dot">◈</span>
+        </div>
+        <div class="group">今天</div>
+        <div class="row sel">
+          <div class="appicon" style="background:#2b3137;">✦</div>
+          <div class="txt">
+            <div class="main mono">let hash = SHA256.hash(data: pngDa…</div>
+            <div class="sub">Xcode · 142 字符</div>
+          </div>
+          <span class="acthint">粘贴</span> <span class="keycap">↩</span>
+        </div>
+        <div class="row">
+          <div class="thumb"></div>
+          <div class="txt">
+            <div class="main">截屏 2026-07-17 14.28.51</div>
+            <div class="sub">2372 × 1486 · 3.1 MB</div>
+          </div>
+          <div class="time">14:28</div>
+        </div>
+        <div class="row">
+          <div class="appicon" style="background:#07c160; color:#fff;">微</div>
+          <div class="txt">
+            <div class="main">会议纪要：Q3 目标已确认，灰度方案…</div>
+            <div class="sub">微信 · 68 字符</div>
+          </div>
+          <div class="time">11:47</div>
+        </div>
+        <div class="row">
+          <div class="appicon" style="background:#1a73e8; color:#fff;">🧭</div>
+          <div class="txt">
+            <div class="main">developer.apple.com/documentation…</div>
+            <div class="sub">Safari · 链接</div>
+          </div>
+          <div class="time">10:15</div>
+        </div>
+        <div class="row">
+          <div class="appicon" style="background:#0a2b4e; color:#fff;">🔒</div>
+          <div class="txt">
+            <div class="main">••••••••••••</div>
+            <div class="sub">1Password · 已打码</div>
+          </div>
+          <div class="time">09:41</div>
+        </div>
+        <div class="group">昨天</div>
+        <div class="row">
+          <div class="appicon" style="background:#f5b400;">📁</div>
+          <div class="txt">
+            <div class="main">Scribe-设计稿-v2.sketch</div>
+            <div class="sub">访达 · 24.6 MB</div>
+          </div>
+          <div class="time">18:03</div>
+        </div>
+      </div>
+      <div class="preview">
+        <div class="content">
+          <span class="cm">// ImageStore.swift</span><br>
+          <span class="kw">let</span> hash = SHA256.hash(data: pngData)<br>
+          <span class="kw">let</span> name = hash.map { String(format: <span class="str">"%02x"</span>, $0) }.joined()<br>
+          <span class="kw">try</span> pngData.write(to: dir.appending(path: name))
+        </div>
+        <dl class="meta">
+          <dt>来源</dt><dd>Xcode</dd>
+          <dt>时间</dt><dd>今天 14:32</dd>
+          <dt>类型</dt><dd>纯文本 · 142 字符 · 4 行</dd>
+          <dt>操作</dt><dd>↩ 粘贴 · ⇧↩ 纯文本 · ⌥↩ 仅复制 · ⌘P 置顶</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="hints">
+      <span><kbd>↑↓</kbd> 选择</span><span><kbd>↩</kbd> 粘贴</span>
+      <span><kbd>⌘1-9</kbd> 快选</span><span><kbd>⌫</kbd> 删除</span><span><kbd>esc</kbd> 关闭</span>
+      <span class="grow"></span><span>412 条 · 86.4 MB</span>
+    </div>
+  </div>
+</div>
+</div>
+<div class="mock-label">图片条目选中时，右栏 content 区显示等比大图（列表缩略图懒加载，选中加载中图，原图仅回填时读取）；文件条目显示图标 + 路径 + 大小。</div>
+
+<h2>主面板 · 深色（随系统自动切换）</h2>
+<div class="dark">
+<div class="desktop" style="height:520px;">
+  <div class="panel">
+    <div class="top">
+      <div class="field"><span class="icon">⌕</span><span>搜索剪贴板历史</span></div>
+      <div class="chips">
+        <span class="chip on">全部</span><span class="chip">今天</span><span class="chip">昨天</span>
+        <span class="chip">本周</span><span class="chip">上周</span><span class="chip">本月</span>
+      </div>
+    </div>
+    <div class="body">
+      <div class="listcol">
+        <div class="group">置顶</div>
+        <div class="row">
+          <div class="appicon">🏢</div>
+          <div class="txt"><div class="main">上海市徐汇区漕溪北路 331 号中金国际…</div></div>
+          <span class="pin-dot">◈</span>
+        </div>
+        <div class="group">今天</div>
+        <div class="row sel">
+          <div class="appicon" style="background:#2b3137;">✦</div>
+          <div class="txt">
+            <div class="main mono">let hash = SHA256.hash(data: pngDa…</div>
+            <div class="sub">Xcode · 142 字符</div>
+          </div>
+          <span class="acthint">粘贴</span> <span class="keycap">↩</span>
+        </div>
+        <div class="row">
+          <div class="thumb"></div>
+          <div class="txt">
+            <div class="main">截屏 2026-07-17 14.28.51</div>
+            <div class="sub">2372 × 1486 · 3.1 MB</div>
+          </div>
+          <div class="time">14:28</div>
+        </div>
+        <div class="row">
+          <div class="appicon" style="background:#07c160; color:#fff;">微</div>
+          <div class="txt">
+            <div class="main">会议纪要：Q3 目标已确认，灰度方案…</div>
+            <div class="sub">微信 · 68 字符</div>
+          </div>
+          <div class="time">11:47</div>
+        </div>
+        <div class="row">
+          <div class="appicon" style="background:#1a73e8; color:#fff;">🧭</div>
+          <div class="txt">
+            <div class="main">developer.apple.com/documentation…</div>
+            <div class="sub">Safari · 链接</div>
+          </div>
+          <div class="time">10:15</div>
+        </div>
+        <div class="row">
+          <div class="appicon" style="background:#0a2b4e; color:#fff;">🔒</div>
+          <div class="txt">
+            <div class="main">••••••••••••</div>
+            <div class="sub">1Password · 已打码</div>
+          </div>
+          <div class="time">09:41</div>
+        </div>
+        <div class="group">昨天</div>
+        <div class="row">
+          <div class="appicon" style="background:#f5b400;">📁</div>
+          <div class="txt">
+            <div class="main">Scribe-设计稿-v2.sketch</div>
+            <div class="sub">访达 · 24.6 MB</div>
+          </div>
+          <div class="time">18:03</div>
+        </div>
+      </div>
+      <div class="preview">
+        <div class="content">
+          <span class="cm">// ImageStore.swift</span><br>
+          <span class="kw">let</span> hash = SHA256.hash(data: pngData)<br>
+          <span class="kw">let</span> name = hash.map { String(format: <span class="str">"%02x"</span>, $0) }.joined()<br>
+          <span class="kw">try</span> pngData.write(to: dir.appending(path: name))
+        </div>
+        <dl class="meta">
+          <dt>来源</dt><dd>Xcode</dd>
+          <dt>时间</dt><dd>今天 14:32</dd>
+          <dt>类型</dt><dd>纯文本 · 142 字符 · 4 行</dd>
+          <dt>操作</dt><dd>↩ 粘贴 · ⇧↩ 纯文本 · ⌥↩ 仅复制 · ⌘P 置顶</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="hints">
+      <span><kbd>↑↓</kbd> 选择</span><span><kbd>↩</kbd> 粘贴</span>
+      <span><kbd>⌘1-9</kbd> 快选</span><span><kbd>⌫</kbd> 删除</span><span><kbd>esc</kbd> 关闭</span>
+      <span class="grow"></span><span>412 条 · 86.4 MB</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<h2>设置 · 460pt 宽 · 深浅并排</h2>
+<div class="duo">
+  <div class="light">
+    <div class="settings">
+      <div class="titlebar">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <div class="t">设置</div>
+      </div>
+      <div class="tabs">
+        <div class="tab on">⚙︎<span>通用</span></div>
+        <div class="tab">🛡<span>隐私</span></div>
+        <div class="tab">🗄<span>存储</span></div>
+      </div>
+      <div class="section">
+        <div class="grouptitle">快捷键</div>
+        <div class="rows">
+          <div class="srow"><div class="lbl">呼出历史面板</div><span class="hotkey">⌘ ⇧ V</span></div>
+        </div>
+        <div class="grouptitle">历史记录</div>
+        <div class="rows">
+          <div class="srow"><div class="lbl">保留最近<span class="note">超期条目自动清理，置顶条目除外</span></div>
+            <div class="stepper"><span class="val">30 天</span><span class="btn">−</span><span class="btn">+</span></div></div>
+          <div class="srow"><div class="lbl">条数上限</div><span class="val">1000 条</span></div>
+        </div>
+        <div class="grouptitle">启动</div>
+        <div class="rows">
+          <div class="srow"><div class="lbl">登录时启动</div><span class="switch on"></span></div>
+        </div>
+        <div class="grouptitle">隐私（第二标签页）</div>
+        <div class="rows">
+          <div class="srow"><div class="lbl">记录密码类内容<span class="note">开启时在列表中打码显示</span></div><span class="switch on"></span></div>
+          <div class="srow"><div class="lbl">排除的应用<span class="note">1Password、钥匙串访问</span></div><span class="val">2 个 ›</span></div>
+        </div>
+        <div class="grouptitle">存储（第三标签页）</div>
+        <div class="rows">
+          <div class="srow"><div class="lbl">已用空间<span class="note">412 条 · 含 37 张图片</span></div><span class="val">86.4 MB</span></div>
+          <div class="srow"><div class="lbl danger">清空全部历史…</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dark">
+    <div class="settings">
+      <div class="titlebar">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <div class="t">设置</div>
+      </div>
+      <div class="tabs">
+        <div class="tab on">⚙︎<span>通用</span></div>
+        <div class="tab">🛡<span>隐私</span></div>
+        <div class="tab">🗄<span>存储</span></div>
+      </div>
+      <div class="section">
+        <div class="grouptitle">快捷键</div>
+        <div class="rows">
+          <div class="srow"><div class="lbl">呼出历史面板</div><span class="hotkey">⌘ ⇧ V</span></div>
+        </div>
+        <div class="grouptitle">历史记录</div>
+        <div class="rows">
+          <div class="srow"><div class="lbl">保留最近<span class="note">超期条目自动清理，置顶条目除外</span></div>
+            <div class="stepper"><span class="val">30 天</span><span class="btn">−</span><span class="btn">+</span></div></div>
+          <div class="srow"><div class="lbl">条数上限</div><span class="val">1000 条</span></div>
+        </div>
+        <div class="grouptitle">启动</div>
+        <div class="rows">
+          <div class="srow"><div class="lbl">登录时启动</div><span class="switch on"></span></div>
+        </div>
+        <div class="grouptitle">隐私（第二标签页）</div>
+        <div class="rows">
+          <div class="srow"><div class="lbl">记录密码类内容<span class="note">开启时在列表中打码显示</span></div><span class="switch on"></span></div>
+          <div class="srow"><div class="lbl">排除的应用<span class="note">1Password、钥匙串访问</span></div><span class="val">2 个 ›</span></div>
+        </div>
+        <div class="grouptitle">存储（第三标签页）</div>
+        <div class="rows">
+          <div class="srow"><div class="lbl">已用空间<span class="note">412 条 · 含 37 张图片</span></div><span class="val">86.4 MB</span></div>
+          <div class="srow"><div class="lbl danger">清空全部历史…</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>Design tokens（镜像，权威来源为 docs/ui/tokens.md）</h2>
+<p style="font-size:13px; color:rgba(255,255,255,0.55); margin-top:8px; max-width:80ch;">
+实现原则：凡标注系统语义色/系统材质的 token，SwiftUI 直接用系统 API，深浅模式自动跟随，<b>不写死颜色值</b>；
+只有「自定义」列的 token 需要在 Asset Catalog 中提供 Any/Dark 双值。窗口不设 appearance 覆盖，跟随系统。</p>
+<div class="tokens"><table>
+  <tr><th>token</th><th>浅色值（聚焦取样）</th><th>深色值</th><th>SwiftUI 还原</th><th>类别</th></tr>
+  <tr><td><code>panel.background</code></td><td><span class="sw" style="background:#fcfbfa;"></span>rgba(252,251,250,0.82)+blur38 sat1.8</td><td><span class="sw" style="background:#1e1e22;"></span>rgba(30,30,34,0.80)+blur38</td><td>NSVisualEffectView(.popover/.fullScreenUI, .behindWindow)，以真机聚焦观感为准</td><td>系统材质（自动）</td></tr>
+  <tr><td><code>row.selected</code></td><td>black @7.5%</td><td>white @9%</td><td>Asset「RowSelected」双值；<b>不用强调色反白</b></td><td>自定义（聚焦同款）</td></tr>
+  <tr><td><code>row.hover</code></td><td>black @4.5%</td><td>white @5.5%</td><td>Asset「RowHover」双值</td><td>自定义</td></tr>
+  <tr><td><code>chip.background</code></td><td>white @80% + 阴影 0 1 2.5 @10%</td><td>white @10% + 描边 white @6%</td><td>Asset「ChipBg」双值 + .shadow</td><td>自定义（白胶囊）</td></tr>
+  <tr><td><code>chip.selected</code></td><td>black @9%，去阴影</td><td>white @18%</td><td>Asset「ChipOn」双值</td><td>自定义</td></tr>
+  <tr><td><code>keycap</code>（按键帽）</td><td>#FFF + 阴影 0 1 2 @14%</td><td>white @14%</td><td>Asset「Keycap」双值</td><td>自定义</td></tr>
+  <tr><td><code>search.field</code></td><td colspan="2">无边框无底色，16pt，图标用 text.secondary，占位 text.tertiary</td><td>HStack + TextField(.plain)</td><td>聚焦式</td></tr>
+  <tr><td><code>text.primary</code></td><td><span class="sw" style="background:#1c1c1e;"></span>#1C1C1E</td><td>white @90%</td><td>Color(nsColor:.labelColor)</td><td>系统色（自动）</td></tr>
+  <tr><td><code>text.secondary</code></td><td>rgba(60,60,67,.60)</td><td>rgba(235,235,245,.60)</td><td>.secondaryLabelColor</td><td>系统色（自动）</td></tr>
+  <tr><td><code>text.tertiary</code></td><td>rgba(60,60,67,.33)</td><td>rgba(235,235,245,.32)</td><td>.tertiaryLabelColor</td><td>系统色（自动）</td></tr>
+  <tr><td><code>divider</code></td><td>black @6%</td><td>white @7%</td><td>Color(nsColor:.separatorColor)</td><td>系统色（自动）</td></tr>
+  <tr><td><code>accent</code></td><td><span class="sw" style="background:#0a7aff;"></span>#0A7AFF</td><td><span class="sw" style="background:#0a84ff;"></span>#0A84FF</td><td>Color.accentColor；<b>仅用于链接/焦点环/设置选中标签</b>，不用于列表选中态</td><td>系统色（自动）</td></tr>
+  <tr><td><code>surface.card</code>（预览底）</td><td>white @66% + 阴影 0 1 3 @8%</td><td>white @6% + 描边 white @6%</td><td>Asset「SurfaceCard」双值</td><td>自定义</td></tr>
+  <tr><td><code>pin.indicator</code></td><td><span class="sw" style="background:#e6a23c;"></span>#E6A23C</td><td>同值</td><td>固定色</td><td>自定义</td></tr>
+  <tr><td><code>danger</code></td><td><span class="sw" style="background:#e0382e;"></span>#E0382E</td><td><span class="sw" style="background:#ff6961;"></span>#FF6961</td><td>Color(nsColor:.systemRed)</td><td>系统色（自动）</td></tr>
+  <tr><td><code>radius.panel / row / card / chip</code></td><td colspan="2">22 / 10 / 8 / 胶囊（聚焦大圆角）</td><td>RoundedRectangle 同值</td><td>原语</td></tr>
+  <tr><td><code>layout.panel</code></td><td colspan="2">720×420，列表栏 296，行高 46，设置窗 460</td><td>frame 同值</td><td>原语</td></tr>
+  <tr><td><code>spacing 刻度</code></td><td colspan="2">4 / 6 / 8 / 12 / 16 / 20</td><td>Spacing 枚举 s1-s6</td><td>原语</td></tr>
+  <tr><td><code>font.search / title / body / label / caption</code></td><td colspan="2">16 / 15 / 13 / 12 / 11，SF Pro + PingFang SC；代码 SF Mono 12</td><td>.system(size:) / .monospaced()</td><td>原语</td></tr>
+  <tr><td><code>motion.fast / base</code></td><td colspan="2">120ms / 180ms，cubic-bezier(0.16,1,0.3,1)；面板出现 scale 0.98→1 + fade</td><td>.easeOut(duration: 0.12 / 0.18)</td><td>原语</td></tr>
+</table></div>
+
+</div>
+</body>
+</html>

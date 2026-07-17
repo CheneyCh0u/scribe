@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scribe UI 方案对比 · A 系统原生 / B 指挥台 / C 置物架</title>
+<style>
+  :root{
+    /* ── 共享原语 token（三套方案通用，SwiftUI 侧同名还原）── */
+    --space-1: 4px;   /* Spacing.s1 */
+    --space-2: 6px;   /* Spacing.s2 */
+    --space-3: 8px;   /* Spacing.s3 */
+    --space-4: 12px;  /* Spacing.s4 */
+    --space-5: 16px;  /* Spacing.s5 */
+    --space-6: 20px;  /* Spacing.s6 */
+    --text-caption: 11px;  /* Font.caption  */
+    --text-label:   12px;  /* Font.label    */
+    --text-body:    13px;  /* Font.body     */
+    --text-title:   15px;  /* Font.title    */
+    --dur-fast: 120ms;     /* Motion.fast   */
+    --dur-base: 180ms;     /* Motion.base   */
+    --ease-out: cubic-bezier(0.16,1,0.3,1);
+    --font-ui: -apple-system, "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --font-serif-cjk: "Songti SC", "Noto Serif SC", serif;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+  body{
+    font-family:var(--font-ui);
+    background:#101014; color:rgba(255,255,255,0.88);
+    line-height:1.7; padding:48px 24px 96px;
+  }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
+
+  .page{ max-width:1180px; margin:0 auto; }
+  .page > header h1{ font-size:26px; font-weight:700; letter-spacing:-0.012em; }
+  .page > header p{ color:rgba(255,255,255,0.55); font-size:14px; margin-top:8px; max-width:64ch; }
+
+  .option{ margin-top:72px; }
+  .option-head{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .option-head .no{ font-family:var(--font-mono); font-size:13px; color:rgba(255,255,255,0.4); }
+  .option-head h2{ font-size:20px; font-weight:700; letter-spacing:-0.012em; }
+  .option-head .ref{ font-size:12px; color:rgba(255,255,255,0.45); }
+  .option-desc{ margin-top:8px; font-size:13px; color:rgba(255,255,255,0.6); max-width:72ch; }
+  .option-desc b{ color:rgba(255,255,255,0.85); font-weight:600; }
+  .mock-row{ display:flex; gap:24px; margin-top:20px; flex-wrap:wrap; align-items:flex-start; }
+  .mock-label{ font-size:12px; color:rgba(255,255,255,0.4); margin:6px 2px 0; }
+
+  /* 桌面壁纸容器：模拟真实唤起环境 */
+  .desktop{
+    border-radius:14px; overflow:hidden; position:relative;
+    outline:1px solid rgba(255,255,255,0.08); outline-offset:-1px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .desktop.light{ background:
+    radial-gradient(120% 90% at 20% 10%, #d8e3ec 0%, #b9c8d8 38%, #8fa3bb 72%, #6e829e 100%); }
+  .desktop.dark{ background:
+    radial-gradient(120% 90% at 80% 0%, #2c3242 0%, #1b1f2b 45%, #101218 100%); }
+  .desktop.warm{ background:
+    radial-gradient(120% 100% at 30% 0%, #e8ddcc 0%, #cdbba1 48%, #9d8c74 100%); }
+
+  /* ═══════════════ 方案 A · 系统原生 ═══════════════ */
+  .theme-a{
+    /* 语义 token → SwiftUI 映射见下方表格 */
+    --a-panel-bg: rgba(246,246,248,0.80);      /* NSVisualEffectView .popover material */
+    --a-row-hover: rgba(0,0,0,0.05);
+    --a-accent: #0a7aff;                        /* Color.accentColor（跟随系统） */
+    --a-accent-tint: rgba(10,122,255,0.14);
+    --a-text-1: #1d1d1f;                        /* labelColor */
+    --a-text-2: rgba(60,60,67,0.60);            /* secondaryLabelColor */
+    --a-text-3: rgba(60,60,67,0.35);            /* tertiaryLabelColor */
+    --a-divider: rgba(0,0,0,0.07);
+    --a-field-bg: rgba(0,0,0,0.05);
+    --a-radius-panel: 12px; --a-radius-row: 6px; --a-radius-chip: 999px;
+  }
+  .panel-a{
+    width:368px; font-size:var(--text-body); color:var(--a-text-1);
+    background:var(--a-panel-bg);
+    -webkit-backdrop-filter:blur(28px) saturate(1.6); backdrop-filter:blur(28px) saturate(1.6);
+    border-radius:var(--a-radius-panel);
+    box-shadow:0 18px 50px rgba(0,0,0,0.32), 0 0 0 0.5px rgba(0,0,0,0.18);
+    margin:34px 0; overflow:hidden;
+  }
+  .panel-a .search{
+    display:flex; align-items:center; gap:8px; padding:12px 14px 8px;
+  }
+  .panel-a .search .field{
+    flex:1; display:flex; align-items:center; gap:6px;
+    background:var(--a-field-bg); border-radius:8px; padding:6px 10px;
+    color:var(--a-text-2); font-size:var(--text-body);
+  }
+  .panel-a .chips{ display:flex; gap:6px; padding:2px 14px 10px; flex-wrap:wrap; }
+  .chip-a{
+    font-size:var(--text-label); padding:3px 10px; border-radius:var(--a-radius-chip);
+    color:var(--a-text-2); background:transparent; cursor:default;
+    transition:background-color var(--dur-fast) var(--ease-out);
+  }
+  .chip-a:hover{ background:var(--a-row-hover); }
+  .chip-a.on{ background:var(--a-accent-tint); color:var(--a-accent); font-weight:600; }
+  .panel-a .list{ padding:0 8px 6px; }
+  .panel-a .group{
+    font-size:var(--text-caption); font-weight:600; color:var(--a-text-3);
+    padding:10px 8px 4px; letter-spacing:0.02em;
+  }
+  .row-a{
+    display:flex; align-items:center; gap:9px;
+    padding:6px 8px; border-radius:var(--a-radius-row);
+    transition:background-color var(--dur-fast) var(--ease-out);
+  }
+  .row-a:hover{ background:var(--a-row-hover); }
+  .row-a.sel{ background:var(--a-accent); color:#fff; }
+  .row-a.sel .sub, .row-a.sel .time{ color:rgba(255,255,255,0.75); }
+  .row-a .appicon{ width:22px; height:22px; border-radius:5px; flex:none;
+    display:flex; align-items:center; justify-content:center; font-size:12px;
+    outline:1px solid rgba(0,0,0,0.08); outline-offset:-1px; }
+  .row-a .txt{ flex:1; min-width:0; }
+  .row-a .main{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row-a .main.mono{ font-family:var(--font-mono); font-size:12px; }
+  .row-a .sub{ font-size:var(--text-caption); color:var(--a-text-2);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row-a .time{ font-size:var(--text-caption); color:var(--a-text-3);
+    flex:none; font-variant-numeric:tabular-nums; }
+  .row-a .thumb{ width:44px; height:32px; border-radius:4px; flex:none;
+    background:linear-gradient(135deg,#7ba7c9,#3e6a92); position:relative;
+    outline:1px solid rgba(0,0,0,0.1); outline-offset:-1px; }
+  .pin-dot{ color:#e6a23c; font-size:11px; }
+  .panel-a .hints{
+    display:flex; gap:14px; padding:8px 14px; border-top:1px solid var(--a-divider);
+    font-size:var(--text-caption); color:var(--a-text-3);
+  }
+  .panel-a .hints .grow{ flex:1; }
+  kbd{
+    font-family:var(--font-ui); font-size:10px; padding:1px 5px; border-radius:4px;
+    background:rgba(0,0,0,0.07); color:inherit;
+  }
+
+  /* ═══════════════ 方案 B · 指挥台 ═══════════════ */
+  .theme-b{
+    --b-panel-bg: rgba(24,24,28,0.90);          /* NSVisualEffectView .hudWindow */
+    --b-surface-1: rgba(255,255,255,0.04);
+    --b-surface-2: rgba(255,255,255,0.07);
+    --b-accent: #e3a25c;                        /* 铜橙 oklch(0.74 0.11 65) */
+    --b-accent-tint: rgba(227,162,92,0.16);
+    --b-text-1: rgba(255,255,255,0.90);
+    --b-text-2: rgba(255,255,255,0.52);
+    --b-text-3: rgba(255,255,255,0.30);
+    --b-divider: rgba(255,255,255,0.07);
+    --b-radius-panel: 14px; --b-radius-row: 8px; --b-radius-chip: 6px;
+  }
+  .panel-b{
+    width:760px; color:var(--b-text-1); font-size:var(--text-body);
+    background:var(--b-panel-bg);
+    -webkit-backdrop-filter:blur(30px); backdrop-filter:blur(30px);
+    border-radius:var(--b-radius-panel);
+    box-shadow:0 24px 70px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.07);
+    margin:30px 0; overflow:hidden;
+  }
+  .panel-b .top{ padding:14px 16px 10px; border-bottom:1px solid var(--b-divider); }
+  .panel-b .searchline{ display:flex; align-items:center; gap:10px; font-size:var(--text-title); }
+  .panel-b .searchline .ph{ color:var(--b-text-3); }
+  .panel-b .chips{ display:flex; gap:6px; margin-top:10px; }
+  .chip-b{
+    font-size:var(--text-label); padding:3px 9px; border-radius:var(--b-radius-chip);
+    color:var(--b-text-2); transition:background-color var(--dur-fast) var(--ease-out);
+  }
+  .chip-b:hover{ background:var(--b-surface-1); }
+  .chip-b.on{ background:var(--b-accent-tint); color:var(--b-accent); font-weight:600; }
+  .panel-b .body{ display:flex; height:352px; }
+  .panel-b .listcol{ width:300px; overflow:hidden; padding:6px 8px; border-right:1px solid var(--b-divider); }
+  .panel-b .group{ font-size:var(--text-caption); font-weight:600; color:var(--b-text-3);
+    padding:8px 8px 4px; letter-spacing:0.04em; }
+  .row-b{
+    display:flex; align-items:center; gap:9px; padding:7px 8px;
+    border-radius:var(--b-radius-row);
+    transition:background-color var(--dur-fast) var(--ease-out);
+  }
+  .row-b:hover{ background:var(--b-surface-1); }
+  .row-b.sel{ background:var(--b-surface-2); }
+  .row-b .kno{
+    font-family:var(--font-mono); font-size:10px; color:var(--b-text-3);
+    width:26px; flex:none; text-align:center;
+    background:var(--b-surface-1); border-radius:4px; padding:2px 0;
+  }
+  .row-b.sel .kno{ background:var(--b-accent); color:#1c1207; font-weight:700; }
+  .row-b .txt{ flex:1; min-width:0; }
+  .row-b .main{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row-b .main.mono{ font-family:var(--font-mono); font-size:12px; }
+  .row-b .sub{ font-size:var(--text-caption); color:var(--b-text-2); }
+  .row-b .thumb{ width:40px; height:28px; border-radius:4px; flex:none;
+    background:linear-gradient(135deg,#5c7fa3,#2e4a68);
+    outline:1px solid rgba(255,255,255,0.1); outline-offset:-1px; }
+  .panel-b .preview{ flex:1; padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
+  .panel-b .preview .content{
+    flex:1; background:var(--b-surface-1); border-radius:10px; padding:14px;
+    font-family:var(--font-mono); font-size:12px; line-height:1.8;
+    color:var(--b-text-1); overflow:hidden;
+  }
+  .panel-b .preview .content .cm{ color:var(--b-text-3); }
+  .panel-b .preview .content .kw{ color:var(--b-accent); }
+  .panel-b .meta{ display:grid; grid-template-columns:64px 1fr; gap:4px 12px;
+    font-size:var(--text-label); }
+  .panel-b .meta dt{ color:var(--b-text-3); }
+  .panel-b .meta dd{ color:var(--b-text-2); font-variant-numeric:tabular-nums; }
+  .panel-b .hints{ display:flex; gap:14px; padding:9px 16px;
+    border-top:1px solid var(--b-divider); font-size:var(--text-caption); color:var(--b-text-3); }
+  .panel-b .hints .grow{ flex:1; }
+  .panel-b kbd{ background:rgba(255,255,255,0.08); }
+
+  /* ═══════════════ 方案 C · 置物架 ═══════════════ */
+  .theme-c{
+    --c-shelf-bg: rgba(250,247,240,0.90);       /* 暖纸 */
+    --c-card-bg: #fffdf8;
+    --c-accent: #c9502e;                        /* 朱砂 oklch(0.58 0.16 33) */
+    --c-accent-tint: rgba(201,80,46,0.10);
+    --c-text-1: #2a2521;
+    --c-text-2: rgba(62,52,44,0.62);
+    --c-text-3: rgba(62,52,44,0.38);
+    --c-divider: rgba(62,52,44,0.10);
+    --c-radius-card: 10px; --c-radius-chip: 999px;
+    --c-shadow-card: 0 1px 3px rgba(50,35,20,0.10), 0 4px 14px rgba(50,35,20,0.08);
+    --c-shadow-lift: 0 6px 20px rgba(50,35,20,0.18);
+  }
+  .shelf{
+    align-self:flex-end; width:100%;
+    background:var(--c-shelf-bg);
+    -webkit-backdrop-filter:blur(26px); backdrop-filter:blur(26px);
+    border-top:1px solid rgba(255,255,255,0.5);
+    box-shadow:0 -12px 40px rgba(50,35,20,0.18);
+    padding:14px 18px 12px; color:var(--c-text-1); font-size:var(--text-body);
+  }
+  .shelf .bar{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .shelf .field{
+    display:flex; align-items:center; gap:6px; width:220px;
+    background:rgba(62,52,44,0.07); border-radius:8px; padding:5px 10px;
+    color:var(--c-text-2); font-size:var(--text-label);
+  }
+  .shelf .chips{ display:flex; gap:6px; }
+  .chip-c{ font-size:var(--text-label); padding:3px 11px; border-radius:var(--c-radius-chip);
+    color:var(--c-text-2); transition:background-color var(--dur-fast) var(--ease-out); }
+  .chip-c:hover{ background:rgba(62,52,44,0.07); }
+  .chip-c.on{ background:var(--c-accent); color:#fff8f2; font-weight:600; }
+  .shelf .grouplabel{
+    font-family:var(--font-serif-cjk); font-size:var(--text-label);
+    color:var(--c-text-3); margin:12px 2px 8px; letter-spacing:0.08em;
+  }
+  .cards{ display:flex; gap:12px; overflow:hidden; padding:2px 2px 8px; }
+  .card{
+    width:172px; height:168px; flex:none; display:flex; flex-direction:column;
+    background:var(--c-card-bg); border-radius:var(--c-radius-card);
+    box-shadow:var(--c-shadow-card);
+    transition:transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+  }
+  .card:hover{ transform:translateY(-4px); box-shadow:var(--c-shadow-lift); }
+  .card.sel{ box-shadow:0 0 0 2px var(--c-accent), var(--c-shadow-lift); }
+  .card .chead{
+    display:flex; align-items:center; gap:6px; padding:8px 10px;
+    font-size:var(--text-caption); color:var(--c-text-2);
+    border-bottom:1px solid var(--c-divider);
+  }
+  .card .chead .time{ margin-left:auto; color:var(--c-text-3); font-variant-numeric:tabular-nums; }
+  .card .cbody{ flex:1; padding:9px 11px; font-size:var(--text-label);
+    line-height:1.65; color:var(--c-text-1); overflow:hidden; }
+  .card .cbody.mono{ font-family:var(--font-mono); font-size:11px; }
+  .card .cbody.img{ padding:0; background:linear-gradient(135deg,#8fae9b,#4d6e5c);
+    border-radius:0; display:flex; align-items:flex-end; }
+  .card .cbody.img .imginfo{ width:100%; padding:6px 10px; font-size:10px;
+    color:rgba(255,255,255,0.92); background:linear-gradient(transparent, rgba(20,25,20,0.55)); }
+  .card .cfoot{ display:flex; align-items:center; padding:6px 10px;
+    font-size:var(--text-caption); color:var(--c-text-3);
+    border-top:1px solid var(--c-divider); }
+  .card .cfoot .tag{ background:var(--c-accent-tint); color:var(--c-accent);
+    padding:1px 7px; border-radius:999px; font-weight:600; }
+  .card .cfoot .pin{ margin-left:auto; }
+  .shelf .hints{ display:flex; gap:14px; margin-top:2px;
+    font-size:var(--text-caption); color:var(--c-text-3); }
+  .shelf .hints .grow{ flex:1; }
+  .shelf kbd{ background:rgba(62,52,44,0.09); }
+
+  /* ═══════════════ 设置窗口（每方案换肤） ═══════════════ */
+  .settings{
+    width:480px; border-radius:12px; overflow:hidden; font-size:var(--text-body);
+    box-shadow:0 18px 50px rgba(0,0,0,0.35), 0 0 0 0.5px rgba(0,0,0,0.2);
+  }
+  .settings .titlebar{ display:flex; align-items:center; gap:6px; padding:11px 12px; }
+  .settings .titlebar .dots{ display:flex; gap:6px; }
+  .settings .titlebar .dot{ width:11px; height:11px; border-radius:50%; }
+  .settings .titlebar .t{ flex:1; text-align:center; font-size:var(--text-body); font-weight:600; margin-right:45px; }
+  .settings .tabs{ display:flex; justify-content:center; gap:4px; padding:0 12px 10px; }
+  .settings .tab{ display:flex; flex-direction:column; align-items:center; gap:2px;
+    font-size:var(--text-caption); padding:5px 12px; border-radius:8px; }
+  .settings .section{ padding:14px 16px 18px; }
+  .settings .grouptitle{ font-size:var(--text-caption); font-weight:600; margin:10px 2px 6px; }
+  .settings .rows{ border-radius:10px; overflow:hidden; }
+  .settings .srow{ display:flex; align-items:center; gap:10px; padding:10px 14px; }
+  .settings .srow + .srow{ border-top-width:1px; border-top-style:solid; }
+  .settings .srow .lbl{ flex:1; }
+  .settings .srow .lbl .note{ font-size:var(--text-caption); display:block; margin-top:1px; }
+  .settings .val{ font-size:var(--text-label); font-variant-numeric:tabular-nums; }
+  .hotkey{ font-family:var(--font-ui); font-size:var(--text-label);
+    padding:3px 10px; border-radius:6px; font-weight:600; }
+  .switch{ width:38px; height:22px; border-radius:11px; position:relative; flex:none; }
+  .switch::after{ content:""; position:absolute; top:2px; width:18px; height:18px;
+    border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.25); }
+  .switch.on::after{ right:2px; } .switch.off::after{ left:2px; }
+  .stepper{ display:flex; align-items:center; gap:8px; }
+  .stepper .btn{ width:22px; height:22px; border-radius:6px; display:flex;
+    align-items:center; justify-content:center; font-size:13px; }
+
+  /* 设置 · A 皮肤 */
+  .settings.skin-a{ background:#f2f2f4; color:var(--a-text-1); }
+  .settings.skin-a .titlebar{ background:#e8e8ea; }
+  .settings.skin-a .dot:nth-child(1){ background:#ff5f57; }
+  .settings.skin-a .dot:nth-child(2){ background:#febc2e; }
+  .settings.skin-a .dot:nth-child(3){ background:#28c840; }
+  .settings.skin-a .tabs{ background:#e8e8ea; }
+  .settings.skin-a .tab.on{ background:rgba(0,0,0,0.08); color:var(--a-accent); }
+  .settings.skin-a .tab{ color:var(--a-text-2); }
+  .settings.skin-a .grouptitle{ color:var(--a-text-3); }
+  .settings.skin-a .rows{ background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.10); }
+  .settings.skin-a .srow + .srow{ border-top-color:rgba(0,0,0,0.06); }
+  .settings.skin-a .note{ color:var(--a-text-2); }
+  .settings.skin-a .val{ color:var(--a-text-2); }
+  .settings.skin-a .hotkey{ background:rgba(0,0,0,0.06); }
+  .settings.skin-a .switch.on{ background:#34c759; } .settings.skin-a .switch.off{ background:rgba(0,0,0,0.16); }
+  .settings.skin-a .stepper .btn{ background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.2); }
+  .settings.skin-a .danger{ color:#e0382e; }
+
+  /* 设置 · B 皮肤 */
+  .settings.skin-b{ background:#202024; color:var(--b-text-1); }
+  .settings.skin-b .titlebar{ background:#28282d; }
+  .settings.skin-b .dot{ background:rgba(255,255,255,0.2); }
+  .settings.skin-b .tabs{ background:#28282d; }
+  .settings.skin-b .tab.on{ background:var(--b-accent-tint); color:var(--b-accent); }
+  .settings.skin-b .tab{ color:var(--b-text-2); }
+  .settings.skin-b .grouptitle{ color:var(--b-text-3); }
+  .settings.skin-b .rows{ background:var(--b-surface-1); }
+  .settings.skin-b .srow + .srow{ border-top-color:rgba(255,255,255,0.06); }
+  .settings.skin-b .note{ color:var(--b-text-2); }
+  .settings.skin-b .val{ color:var(--b-text-2); }
+  .settings.skin-b .hotkey{ background:var(--b-accent-tint); color:var(--b-accent); }
+  .settings.skin-b .switch.on{ background:var(--b-accent); } .settings.skin-b .switch.off{ background:rgba(255,255,255,0.15); }
+  .settings.skin-b .stepper .btn{ background:var(--b-surface-2); }
+  .settings.skin-b .danger{ color:#ff6b5e; }
+
+  /* 设置 · C 皮肤 */
+  .settings.skin-c{ background:#f7f2e9; color:var(--c-text-1); }
+  .settings.skin-c .titlebar{ background:#efe8db; }
+  .settings.skin-c .dot:nth-child(1){ background:#ff5f57; }
+  .settings.skin-c .dot:nth-child(2){ background:#febc2e; }
+  .settings.skin-c .dot:nth-child(3){ background:#28c840; }
+  .settings.skin-c .titlebar .t{ font-family:var(--font-serif-cjk); }
+  .settings.skin-c .tabs{ background:#efe8db; }
+  .settings.skin-c .tab.on{ background:var(--c-accent-tint); color:var(--c-accent); }
+  .settings.skin-c .tab{ color:var(--c-text-2); }
+  .settings.skin-c .grouptitle{ color:var(--c-text-3); font-family:var(--font-serif-cjk); letter-spacing:0.08em; }
+  .settings.skin-c .rows{ background:var(--c-card-bg); box-shadow:var(--c-shadow-card); }
+  .settings.skin-c .srow + .srow{ border-top-color:var(--c-divider); }
+  .settings.skin-c .note{ color:var(--c-text-2); }
+  .settings.skin-c .val{ color:var(--c-text-2); }
+  .settings.skin-c .hotkey{ background:var(--c-accent-tint); color:var(--c-accent); }
+  .settings.skin-c .switch.on{ background:var(--c-accent); } .settings.skin-c .switch.off{ background:rgba(62,52,44,0.18); }
+  .settings.skin-c .stepper .btn{ background:#fff; box-shadow:0 1px 2px rgba(50,35,20,0.2); }
+  .settings.skin-c .danger{ color:#c9502e; }
+
+  /* token 表 */
+  .tokens{ margin-top:18px; overflow-x:auto; }
+  .tokens table{ border-collapse:collapse; font-size:12px; min-width:640px; }
+  .tokens th, .tokens td{ text-align:left; padding:6px 14px 6px 0; border-bottom:1px solid rgba(255,255,255,0.07); }
+  .tokens th{ color:rgba(255,255,255,0.4); font-weight:600; font-size:11px; }
+  .tokens td{ color:rgba(255,255,255,0.72); }
+  .tokens code{ font-family:var(--font-mono); font-size:11px; color:rgba(255,255,255,0.85); }
+  .sw{ display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-1px;
+    margin-right:6px; outline:1px solid rgba(255,255,255,0.15); outline-offset:-1px; }
+  details.tokens-wrap{ margin-top:16px; }
+  details.tokens-wrap summary{ cursor:pointer; font-size:13px; color:rgba(255,255,255,0.55); }
+
+  /* 对比表 */
+  .compare{ margin-top:80px; }
+  .compare h2{ font-size:20px; font-weight:700; }
+  .compare table{ border-collapse:collapse; width:100%; margin-top:16px; font-size:13px; }
+  .compare th, .compare td{ text-align:left; padding:9px 14px 9px 0; border-bottom:1px solid rgba(255,255,255,0.08); vertical-align:top; }
+  .compare th{ color:rgba(255,255,255,0.4); font-size:12px; font-weight:600; }
+  .compare td:first-child{ color:rgba(255,255,255,0.45); white-space:nowrap; }
+  .reco{ margin-top:24px; padding:16px 20px; border-radius:12px;
+    background:rgba(227,162,92,0.08); outline:1px solid rgba(227,162,92,0.25); outline-offset:-1px;
+    font-size:13px; color:rgba(255,255,255,0.75); max-width:78ch; }
+  .reco b{ color:#e3a25c; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <h1>Scribe · UI 交互方案对比</h1>
+  <p>三套方案在布局结构、信息密度、色温三个维度真正拉开差异，分别对应同品类三个被验证过的形态。每套含主面板、设置页与独立
+     design token 表，选定后按 token 在 SwiftUI 中 1:1 还原。悬停可看交互状态。</p>
+</header>
+
+<!-- ═══════════════════════ 方案 A ═══════════════════════ -->
+<section class="option theme-a">
+  <div class="option-head">
+    <span class="no">A</span><h2>系统原生</h2>
+    <span class="ref">参照形态：Maccy · macOS 系统菜单</span>
+  </div>
+  <p class="option-desc"><b>论点：像系统自带的组件，而不是一个第三方应用。</b>
+    紧凑单列，浅色毛玻璃（NSVisualEffectView），跟随系统强调色，在鼠标或菜单栏位置就近弹出。
+    最快、最轻、学习成本为零；代价是长文本与图片只能看两行摘要。</p>
+
+  <div class="mock-row">
+    <div>
+      <div class="desktop light" style="width:560px; height:520px;">
+        <div class="panel-a">
+          <div class="search">
+            <div class="field">⌕ <span>搜索，直接打字即过滤</span></div>
+          </div>
+          <div class="chips">
+            <span class="chip-a on">全部</span><span class="chip-a">今天</span><span class="chip-a">昨天</span>
+            <span class="chip-a">本周</span><span class="chip-a">上周</span><span class="chip-a">本月</span>
+          </div>
+          <div class="list">
+            <div class="group">置顶</div>
+            <div class="row-a">
+              <div class="appicon" style="background:#fff;">🏢</div>
+              <div class="txt"><div class="main">上海市徐汇区漕溪北路 331 号中金国际广场 B 座 1201</div></div>
+              <span class="pin-dot">◈</span>
+            </div>
+            <div class="group">今天</div>
+            <div class="row-a sel">
+              <div class="appicon" style="background:#2b3137;">✦</div>
+              <div class="txt">
+                <div class="main mono">let hash = SHA256.hash(data: pngData)</div>
+                <div class="sub">Xcode · 42 字符</div>
+              </div>
+              <div class="time">14:32</div>
+            </div>
+            <div class="row-a">
+              <div class="thumb"></div>
+              <div class="txt">
+                <div class="main">截屏 2026-07-17 14.28.51</div>
+                <div class="sub">2372 × 1486 · 3.1 MB</div>
+              </div>
+              <div class="time">14:28</div>
+            </div>
+            <div class="row-a">
+              <div class="appicon" style="background:#07c160; color:#fff;">微</div>
+              <div class="txt">
+                <div class="main">会议纪要：Q3 目标已确认，灰度方案下周三前给出</div>
+                <div class="sub">微信 · 68 字符</div>
+              </div>
+              <div class="time">11:47</div>
+            </div>
+            <div class="row-a">
+              <div class="appicon" style="background:#1a73e8; color:#fff;">🧭</div>
+              <div class="txt">
+                <div class="main">https://developer.apple.com/documentation/appkit/nspanel</div>
+                <div class="sub">Safari · 链接</div>
+              </div>
+              <div class="time">10:15</div>
+            </div>
+            <div class="row-a">
+              <div class="appicon" style="background:#0a2b4e; color:#fff;">🔒</div>
+              <div class="txt">
+                <div class="main">••••••••••••</div>
+                <div class="sub">1Password · 已打码，回车仍可粘贴</div>
+              </div>
+              <div class="time">09:41</div>
+            </div>
+            <div class="group">昨天</div>
+            <div class="row-a">
+              <div class="appicon" style="background:#f5b400;">📁</div>
+              <div class="txt">
+                <div class="main">Scribe-设计稿-v2.sketch</div>
+                <div class="sub">访达 · 24.6 MB</div>
+              </div>
+              <div class="time">18:03</div>
+            </div>
+          </div>
+          <div class="hints">
+            <span><kbd>↑↓</kbd> 选择</span><span><kbd>↩</kbd> 粘贴</span>
+            <span><kbd>⌘1-9</kbd> 快选</span><span class="grow"></span><span>412 条</span>
+          </div>
+        </div>
+      </div>
+      <div class="mock-label">主面板 · 368pt 宽，就近弹出，行高 44pt</div>
+    </div>
+
+    <div>
+      <div class="settings skin-a">
+        <div class="titlebar">
+          <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <div class="t">设置</div>
+        </div>
+        <div class="tabs">
+          <div class="tab on">⚙︎<span>通用</span></div>
+          <div class="tab">🛡<span>隐私</span></div>
+          <div class="tab">🗄<span>存储</span></div>
+        </div>
+        <div class="section">
+          <div class="grouptitle">快捷键</div>
+          <div class="rows">
+            <div class="srow"><div class="lbl">呼出历史面板</div><span class="hotkey">⌘ ⇧ V</span></div>
+          </div>
+          <div class="grouptitle">历史记录</div>
+          <div class="rows">
+            <div class="srow"><div class="lbl">保留最近<span class="note">超期条目自动清理，置顶条目除外</span></div>
+              <div class="stepper"><span class="val">30 天</span><span class="btn">−</span><span class="btn">+</span></div></div>
+            <div class="srow"><div class="lbl">条数上限</div><span class="val">1000 条</span></div>
+          </div>
+          <div class="grouptitle">启动</div>
+          <div class="rows">
+            <div class="srow"><div class="lbl">登录时启动</div><span class="switch on"></span></div>
+          </div>
+          <div class="grouptitle">隐私（第二个标签页）</div>
+          <div class="rows">
+            <div class="srow"><div class="lbl">记录密码类内容<span class="note">开启时在列表中打码显示</span></div><span class="switch on"></span></div>
+            <div class="srow"><div class="lbl">排除的应用<span class="note">1Password、钥匙串访问</span></div><span class="val">2 个 ›</span></div>
+          </div>
+          <div class="grouptitle">存储（第三个标签页）</div>
+          <div class="rows">
+            <div class="srow"><div class="lbl">已用空间<span class="note">412 条 · 含 37 张图片</span></div><span class="val">86.4 MB</span></div>
+            <div class="srow"><div class="lbl danger">清空全部历史…</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="mock-label">设置 · 原生 System Settings 风格（三个标签页此处平铺展示）</div>
+    </div>
+  </div>
+
+  <details class="tokens-wrap"><summary>方案 A · design tokens（点开）</summary>
+  <div class="tokens"><table>
+    <tr><th>token</th><th>值</th><th>SwiftUI 还原</th></tr>
+    <tr><td><code>panel.background</code></td><td><span class="sw" style="background:#f0f0f3;"></span>rgba(246,246,248,0.80) + blur28</td><td>NSVisualEffectView(.popover) + .behindWindow</td></tr>
+    <tr><td><code>accent</code></td><td><span class="sw" style="background:#0a7aff;"></span>#0A7AFF</td><td>Color.accentColor（跟随系统设置）</td></tr>
+    <tr><td><code>accent.tint</code></td><td>accent @ 14%</td><td>accentColor.opacity(0.14)</td></tr>
+    <tr><td><code>text.primary</code></td><td><span class="sw" style="background:#1d1d1f;"></span>#1D1D1F</td><td>Color(nsColor: .labelColor)</td></tr>
+    <tr><td><code>text.secondary</code></td><td>rgba(60,60,67,0.60)</td><td>.secondaryLabelColor</td></tr>
+    <tr><td><code>text.tertiary</code></td><td>rgba(60,60,67,0.35)</td><td>.tertiaryLabelColor</td></tr>
+    <tr><td><code>row.hover</code></td><td>rgba(0,0,0,0.05)</td><td>Color.black.opacity(0.05)</td></tr>
+    <tr><td><code>row.selected</code></td><td>= accent，文字反白</td><td>accentColor + .white 前景</td></tr>
+    <tr><td><code>radius.panel / row / chip</code></td><td>12 / 6 / 胶囊</td><td>RoundedRectangle 同值</td></tr>
+    <tr><td><code>font.body / label / caption</code></td><td>13 / 12 / 11 SF Pro + PingFang</td><td>.system(size:) 同值</td></tr>
+    <tr><td><code>row.height / panel.width</code></td><td>44pt / 368pt</td><td>frame 同值</td></tr>
+    <tr><td><code>motion.hover / select</code></td><td>120ms ease-out（透明度/背景色）</td><td>.animation(.easeOut(duration:0.12))</td></tr>
+  </table></div></details>
+</section>
+
+<!-- ═══════════════════════ 方案 B ═══════════════════════ -->
+<section class="option theme-b">
+  <div class="option-head">
+    <span class="no">B</span><h2>指挥台</h2>
+    <span class="ref">参照形态：Raycast · Alfred 剪贴板</span>
+  </div>
+  <p class="option-desc"><b>论点：键盘是唯一输入设备，预览栏消灭一切二次操作。</b>
+    屏幕居中的暗色双栏命令面板：左列表右预览，长文本、代码、图片原地看全貌；⌘1-9 数字徽标常显，
+    选中项徽标点亮铜橙色。密度最高，效率最高；代价是面板大、存在感强。</p>
+
+  <div class="mock-row">
+    <div>
+      <div class="desktop dark" style="width:860px; height:540px;">
+        <div class="panel-b">
+          <div class="top">
+            <div class="searchline">⌕ <span class="ph">搜索剪贴板历史…</span></div>
+            <div class="chips">
+              <span class="chip-b on">全部</span><span class="chip-b">今天</span><span class="chip-b">昨天</span>
+              <span class="chip-b">本周</span><span class="chip-b">上周</span><span class="chip-b">本月</span>
+            </div>
+          </div>
+          <div class="body">
+            <div class="listcol">
+              <div class="group">置顶</div>
+              <div class="row-b">
+                <span class="kno">◈</span>
+                <div class="txt"><div class="main">上海市徐汇区漕溪北路 331 号中金国际…</div></div>
+              </div>
+              <div class="group">今天</div>
+              <div class="row-b sel">
+                <span class="kno">⌘1</span>
+                <div class="txt"><div class="main mono">let hash = SHA256.hash(data: pngDa…</div>
+                  <div class="sub">Xcode · 14:32</div></div>
+              </div>
+              <div class="row-b">
+                <span class="kno">⌘2</span>
+                <div class="thumb"></div>
+                <div class="txt"><div class="main">截屏 2026-07-17 14.28.51</div>
+                  <div class="sub">2372×1486 · 14:28</div></div>
+              </div>
+              <div class="row-b">
+                <span class="kno">⌘3</span>
+                <div class="txt"><div class="main">会议纪要：Q3 目标已确认，灰度方案下…</div>
+                  <div class="sub">微信 · 11:47</div></div>
+              </div>
+              <div class="row-b">
+                <span class="kno">⌘4</span>
+                <div class="txt"><div class="main">developer.apple.com/documentation/…</div>
+                  <div class="sub">Safari · 10:15</div></div>
+              </div>
+              <div class="row-b">
+                <span class="kno">⌘5</span>
+                <div class="txt"><div class="main">••••••••••••</div>
+                  <div class="sub">1Password · 09:41</div></div>
+              </div>
+              <div class="group">昨天</div>
+              <div class="row-b">
+                <span class="kno">⌘6</span>
+                <div class="txt"><div class="main">Scribe-设计稿-v2.sketch</div>
+                  <div class="sub">访达 · 18:03</div></div>
+              </div>
+            </div>
+            <div class="preview">
+              <div class="content">
+                <span class="cm">// ImageStore.swift</span><br>
+                <span class="kw">let</span> hash = SHA256.hash(data: pngData)<br>
+                <span class="kw">let</span> name = hash.map { String(format: <span style="color:#9ec97f;">"%02x"</span>, $0) }.joined()<br>
+                <span class="kw">try</span> pngData.write(to: dir.appending(path: name))
+              </div>
+              <dl class="meta">
+                <dt>来源</dt><dd>Xcode</dd>
+                <dt>时间</dt><dd>今天 14:32</dd>
+                <dt>类型</dt><dd>纯文本 · 142 字符 · 4 行</dd>
+                <dt>操作</dt><dd>↩ 粘贴 · ⇧↩ 纯文本粘贴 · ⌥↩ 仅复制 · ⌘P 置顶</dd>
+              </dl>
+            </div>
+          </div>
+          <div class="hints">
+            <span><kbd>↑↓</kbd> 选择</span><span><kbd>↩</kbd> 粘贴</span><span><kbd>⌫</kbd> 删除</span>
+            <span><kbd>esc</kbd> 关闭</span><span class="grow"></span><span>412 条 · 86.4 MB</span>
+          </div>
+        </div>
+      </div>
+      <div class="mock-label">主面板 · 760×440pt 屏幕居中，左列表 300pt + 右预览</div>
+    </div>
+
+    <div>
+      <div class="settings skin-b">
+        <div class="titlebar">
+          <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <div class="t">设置</div>
+        </div>
+        <div class="tabs">
+          <div class="tab on">⚙︎<span>通用</span></div>
+          <div class="tab">🛡<span>隐私</span></div>
+          <div class="tab">🗄<span>存储</span></div>
+        </div>
+        <div class="section">
+          <div class="grouptitle">快捷键</div>
+          <div class="rows">
+            <div class="srow"><div class="lbl">呼出历史面板</div><span class="hotkey">⌘ ⇧ V</span></div>
+          </div>
+          <div class="grouptitle">历史记录</div>
+          <div class="rows">
+            <div class="srow"><div class="lbl">保留最近<span class="note">超期条目自动清理，置顶条目除外</span></div>
+              <div class="stepper"><span class="val">30 天</span><span class="btn">−</span><span class="btn">+</span></div></div>
+            <div class="srow"><div class="lbl">条数上限</div><span class="val">1000 条</span></div>
+          </div>
+          <div class="grouptitle">启动</div>
+          <div class="rows">
+            <div class="srow"><div class="lbl">登录时启动</div><span class="switch on"></span></div>
+          </div>
+          <div class="grouptitle">隐私</div>
+          <div class="rows">
+            <div class="srow"><div class="lbl">记录密码类内容<span class="note">开启时在列表中打码显示</span></div><span class="switch on"></span></div>
+            <div class="srow"><div class="lbl">排除的应用<span class="note">1Password、钥匙串访问</span></div><span class="val">2 个 ›</span></div>
+          </div>
+          <div class="grouptitle">存储</div>
+          <div class="rows">
+            <div class="srow"><div class="lbl">已用空间<span class="note">412 条 · 含 37 张图片</span></div><span class="val">86.4 MB</span></div>
+            <div class="srow"><div class="lbl danger">清空全部历史…</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="mock-label">设置 · 暗色同肤，结构与 A 一致</div>
+    </div>
+  </div>
+
+  <details class="tokens-wrap"><summary>方案 B · design tokens（点开）</summary>
+  <div class="tokens"><table>
+    <tr><th>token</th><th>值</th><th>SwiftUI 还原</th></tr>
+    <tr><td><code>panel.background</code></td><td><span class="sw" style="background:#18181c;"></span>rgba(24,24,28,0.90) + blur30</td><td>NSVisualEffectView(.hudWindow, 强制 dark)</td></tr>
+    <tr><td><code>surface.1 / surface.2</code></td><td>white @ 4% / 7%</td><td>Color.white.opacity(0.04 / 0.07)</td></tr>
+    <tr><td><code>accent</code></td><td><span class="sw" style="background:#e3a25c;"></span>#E3A25C（铜橙 oklch 0.74/0.11/65）</td><td>Color(hex:"E3A25C") 固定，不随系统</td></tr>
+    <tr><td><code>accent.tint</code></td><td>accent @ 16%</td><td>opacity(0.16)</td></tr>
+    <tr><td><code>text.primary / secondary / tertiary</code></td><td>white @ 90% / 52% / 30%</td><td>Color.white.opacity 同值</td></tr>
+    <tr><td><code>row.selected</code></td><td>surface.2 + 徽标填充 accent</td><td>背景色 + 徽标前景 #1C1207</td></tr>
+    <tr><td><code>radius.panel / row / chip</code></td><td>14 / 8 / 6</td><td>RoundedRectangle 同值</td></tr>
+    <tr><td><code>font.mono</code></td><td>SF Mono 12（代码预览/数字徽标）</td><td>.monospaced()</td></tr>
+    <tr><td><code>layout</code></td><td>面板 760×440，列表栏 300</td><td>frame 同值</td></tr>
+    <tr><td><code>motion.preview</code></td><td>预览切换 120ms 交叉淡入 + scale 0.98→1</td><td>.transition(.opacity) + easeOut(0.12)</td></tr>
+  </table></div></details>
+</section>
+
+<!-- ═══════════════════════ 方案 C ═══════════════════════ -->
+<section class="option theme-c">
+  <div class="option-head">
+    <span class="no">C</span><h2>置物架</h2>
+    <span class="ref">参照形态：Paste 底部卡片架</span>
+  </div>
+  <p class="option-desc"><b>论点：剪贴板是可视的实物，不是数据库行。</b>
+    从屏幕底部升起的暖纸色卡片架，每条内容一张卡，图片是完整封面而非小缩略图；
+    宋体分组标签压出"墨迹"气质。对图片和视觉型用户最友好；代价是占满屏幕底边、单屏可见条数最少。</p>
+
+  <div class="mock-row">
+    <div>
+      <div class="desktop warm" style="width:860px; height:480px; align-items:flex-end;">
+        <div class="shelf">
+          <div class="bar">
+            <div class="field">⌕ <span>搜索…</span></div>
+            <div class="chips">
+              <span class="chip-c on">全部</span><span class="chip-c">今天</span><span class="chip-c">昨天</span>
+              <span class="chip-c">本周</span><span class="chip-c">上周</span><span class="chip-c">本月</span>
+            </div>
+          </div>
+          <div class="grouplabel">今 天 · 七 月 十 七</div>
+          <div class="cards">
+            <div class="card sel">
+              <div class="chead">✦ Xcode <span class="time">14:32</span></div>
+              <div class="cbody mono">let hash = SHA256.hash(data: pngData)<br>let name = hash.map { String(format: "%02x", $0) }.joined()</div>
+              <div class="cfoot"><span class="tag">代码</span></div>
+            </div>
+            <div class="card">
+              <div class="chead">📷 截屏 <span class="time">14:28</span></div>
+              <div class="cbody img"><div class="imginfo">2372 × 1486 · 3.1 MB</div></div>
+              <div class="cfoot"><span class="tag">图片</span></div>
+            </div>
+            <div class="card">
+              <div class="chead">💬 微信 <span class="time">11:47</span></div>
+              <div class="cbody">会议纪要：Q3 目标已确认，灰度方案下周三前给出，负责人子涵。</div>
+              <div class="cfoot"><span class="tag">文本</span></div>
+            </div>
+            <div class="card">
+              <div class="chead">🧭 Safari <span class="time">10:15</span></div>
+              <div class="cbody" style="word-break:break-all; color:var(--c-accent);">developer.apple.com/<br>documentation/appkit/nspanel</div>
+              <div class="cfoot"><span class="tag">链接</span></div>
+            </div>
+            <div class="card">
+              <div class="chead">🔒 1Password <span class="time">09:41</span></div>
+              <div class="cbody" style="letter-spacing:0.2em;">••••••••<br><span style="font-size:10px; color:var(--c-text-3); letter-spacing:0;">已打码 · 回车仍可粘贴</span></div>
+              <div class="cfoot"><span class="tag">密码</span></div>
+            </div>
+            <div class="card">
+              <div class="chead">🏢 备忘录 <span class="time">置顶</span></div>
+              <div class="cbody">上海市徐汇区漕溪北路 331 号中金国际广场 B 座 1201</div>
+              <div class="cfoot"><span class="tag">文本</span><span class="pin" style="color:#c9502e;">◈</span></div>
+            </div>
+          </div>
+          <div class="hints">
+            <span><kbd>←→</kbd> 选择</span><span><kbd>↩</kbd> 粘贴</span><span><kbd>空格</kbd> 大图预览</span>
+            <span class="grow"></span><span>412 条</span>
+          </div>
+        </div>
+      </div>
+      <div class="mock-label">主面板 · 全屏宽底部架，高约 260pt，卡片 172×168pt 横向滚动</div>
+    </div>
+
+    <div>
+      <div class="settings skin-c">
+        <div class="titlebar">
+          <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <div class="t">设 置</div>
+        </div>
+        <div class="tabs">
+          <div class="tab on">⚙︎<span>通用</span></div>
+          <div class="tab">🛡<span>隐私</span></div>
+          <div class="tab">🗄<span>存储</span></div>
+        </div>
+        <div class="section">
+          <div class="grouptitle">快 捷 键</div>
+          <div class="rows">
+            <div class="srow"><div class="lbl">呼出历史面板</div><span class="hotkey">⌘ ⇧ V</span></div>
+          </div>
+          <div class="grouptitle">历 史 记 录</div>
+          <div class="rows">
+            <div class="srow"><div class="lbl">保留最近<span class="note">超期条目自动清理，置顶条目除外</span></div>
+              <div class="stepper"><span class="val">30 天</span><span class="btn">−</span><span class="btn">+</span></div></div>
+            <div class="srow"><div class="lbl">条数上限</div><span class="val">1000 条</span></div>
+            <div class="srow"><div class="lbl">登录时启动</div><span class="switch on"></span></div>
+          </div>
+          <div class="grouptitle">隐 私</div>
+          <div class="rows">
+            <div class="srow"><div class="lbl">记录密码类内容<span class="note">开启时在卡片中打码显示</span></div><span class="switch on"></span></div>
+            <div class="srow"><div class="lbl">排除的应用<span class="note">1Password、钥匙串访问</span></div><span class="val">2 个 ›</span></div>
+          </div>
+          <div class="grouptitle">存 储</div>
+          <div class="rows">
+            <div class="srow"><div class="lbl">已用空间<span class="note">412 条 · 含 37 张图片</span></div><span class="val">86.4 MB</span></div>
+            <div class="srow"><div class="lbl danger">清空全部历史…</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="mock-label">设置 · 暖纸同肤，宋体组标题呼应主面板</div>
+    </div>
+  </div>
+
+  <details class="tokens-wrap"><summary>方案 C · design tokens（点开）</summary>
+  <div class="tokens"><table>
+    <tr><th>token</th><th>值</th><th>SwiftUI 还原</th></tr>
+    <tr><td><code>shelf.background</code></td><td><span class="sw" style="background:#faf7f0;"></span>rgba(250,247,240,0.90) + blur26</td><td>NSVisualEffectView(.underWindowBackground) + 暖色叠加</td></tr>
+    <tr><td><code>card.background</code></td><td><span class="sw" style="background:#fffdf8;"></span>#FFFDF8</td><td>Color(hex:"FFFDF8")</td></tr>
+    <tr><td><code>accent</code></td><td><span class="sw" style="background:#c9502e;"></span>#C9502E（朱砂 oklch 0.58/0.16/33）</td><td>固定色，不随系统</td></tr>
+    <tr><td><code>text.primary / secondary / tertiary</code></td><td>#2A2521 / 62% / 38%</td><td>同值 opacity</td></tr>
+    <tr><td><code>shadow.card</code></td><td>0 1 3 @10% + 0 4 14 @8%（暖黑）</td><td>两层 .shadow() 叠加</td></tr>
+    <tr><td><code>shadow.lift</code></td><td>0 6 20 @18%，hover 上移 4pt</td><td>.offset(y:-4) + .easeOut(0.18)</td></tr>
+    <tr><td><code>card.size / radius</code></td><td>172×168 / 10</td><td>frame + RoundedRectangle</td></tr>
+    <tr><td><code>font.group-label</code></td><td>Songti SC 12 · 字距 0.08em</td><td>Font.custom("Songti SC", size:12) + tracking</td></tr>
+    <tr><td><code>card.selected</code></td><td>2pt 朱砂描边 + lift 阴影</td><td>.stroke(accent, lineWidth:2)</td></tr>
+    <tr><td><code>motion.hover</code></td><td>180ms ease-out，translateY + shadow</td><td>.animation(.easeOut(duration:0.18))</td></tr>
+  </table></div></details>
+</section>
+
+<!-- ═══════════════════════ 对比 ═══════════════════════ -->
+<section class="compare">
+  <h2>横向对比</h2>
+  <table>
+    <tr><th></th><th>A · 系统原生</th><th>B · 指挥台</th><th>C · 置物架</th></tr>
+    <tr><td>唤起形态</td><td>就近小窗（菜单栏/光标处）</td><td>屏幕居中大面板</td><td>屏幕底部整条升起</td></tr>
+    <tr><td>单屏可见条数</td><td>约 8 条</td><td>约 9 条 + 完整预览</td><td>约 7 张卡</td></tr>
+    <tr><td>长文本/代码体验</td><td>两行摘要，需粘贴后看</td><td>右栏原地看全文</td><td>卡片约 6 行</td></tr>
+    <tr><td>图片体验</td><td>44pt 小缩略图</td><td>列表小图 + 右栏大图</td><td>整卡封面，最强</td></tr>
+    <tr><td>键盘效率</td><td>高</td><td>最高（⌘1-9 常显 + 预览免二次操作）</td><td>中（横向方向键）</td></tr>
+    <tr><td>存在感/打扰度</td><td>最低</td><td>中</td><td>高（占满底边）</td></tr>
+    <tr><td>实现风险</td><td>最低</td><td>低（双栏联动）</td><td>中（横向虚拟化+封面解码对内存红线压力大）</td></tr>
+  </table>
+
+  <p class="reco"><b>我的推荐：B 指挥台。</b>产品论点是"快捷键唤起、键盘优先"，B 的右栏预览让长文本、代码、图片都无需二次操作即可确认内容，⌘1-9 常显徽标把高频路径压缩到一次按键；实现上双栏只是列表选中态驱动预览视图，成本可控。若你更看重"轻、像系统组件"，选 A；C 视觉最讨喜但与内存红线和键盘优先的定位有张力。</p>
+</section>
+
+</div>
+</body>
+</html>
