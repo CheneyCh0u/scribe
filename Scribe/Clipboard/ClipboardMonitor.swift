@@ -10,6 +10,9 @@ final class ClipboardMonitor {
     private var changeCount: Int
     private var suppressRemaining = 0
 
+    /// 暂停期间不采集（悄悄跟进 changeCount，恢复后不回填暂停期内容）。
+    var isPaused = false
+
     init(store: HistoryStore) {
         self.store = store
         changeCount = NSPasteboard.general.changeCount
@@ -33,6 +36,8 @@ final class ClipboardMonitor {
         let pasteboard = NSPasteboard.general
         guard pasteboard.changeCount != changeCount else { return }
         changeCount = pasteboard.changeCount
+
+        if isPaused { return }
 
         if suppressRemaining > 0 {
             suppressRemaining -= 1

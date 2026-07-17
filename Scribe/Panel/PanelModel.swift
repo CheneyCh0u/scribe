@@ -15,6 +15,9 @@ final class PanelModel: ObservableObject {
     @Published var filter: TimeFilter = .all {
         didSet { if filter != oldValue { reload(keepSelection: false) } }
     }
+    @Published var typeFilter: TypeFilter = .all {
+        didSet { if typeFilter != oldValue { reload(keepSelection: false) } }
+    }
     @Published private(set) var sections: [Section] = []
     @Published var selectedID: Int64?
     @Published private(set) var totalCount = 0
@@ -45,11 +48,12 @@ final class PanelModel: ObservableObject {
     func prepareForShow() {
         searchText = ""
         filter = .all
+        typeFilter = .all
         reload(keepSelection: false)
     }
 
     func reload(keepSelection: Bool) {
-        let result = store.fetch(filter: filter, query: searchText)
+        let result = store.fetch(filter: filter, type: typeFilter, query: searchText)
         var sections: [Section] = []
         if !result.pinned.isEmpty {
             sections.append(Section(title: "置顶", items: result.pinned))
@@ -124,6 +128,37 @@ final class PanelModel: ObservableObject {
     func togglePinSelected() {
         guard let item = selectedItem, let id = item.id else { return }
         store.togglePin(id: id)
+    }
+
+    /// ⌘O：链接开浏览器、文件在访达显示、图片用默认应用打开。
+    func openSelected() {
+        guard let item = selectedItem else { return }
+        switch item.type {
+        case "file":
+            let urls = item.filePaths.map { URL(fileURLWithPath: $0) }
+            NSWorkspace.shared.activateFileViewerSelecting(urls)
+            onRequestClose?()
+        case "image":
+            if let path = item.imagePath, let url = ImageStore.shared?.url(for: path) {
+                NSWorkspace.shared.open(url)
+                onRequestClose?()
+            }
+        default:
+            if item.isLink,
+               let url = URL(string: item.content.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                NSWorkspace.shared.open(url)
+                onRequestClose?()
+            }
+        }
+    }
+
+    var openActionTitle: String? {
+        guard let item = selectedItem else { return nil }
+        switch item.type {
+        case "file": return "在访达中显示"
+        case "image": return "打开图片"
+        default: return item.isLink ? "打开链接" : nil
+        }
     }
 
     // MARK: - 分组

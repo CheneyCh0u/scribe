@@ -76,6 +76,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let openItem = NSMenuItem(title: "打开面板", action: #selector(openPanel), keyEquivalent: "")
         openItem.target = self
         menu.addItem(openItem)
+        let pauseItem = NSMenuItem(title: "暂停记录", action: #selector(togglePause(_:)), keyEquivalent: "")
+        pauseItem.target = self
+        menu.addItem(pauseItem)
         menu.addItem(.separator())
         let settingsItem = NSMenuItem(title: "设置…", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
@@ -98,6 +101,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openSettings() {
         settingsController.show()
+    }
+
+    @objc private func togglePause(_ sender: NSMenuItem) {
+        clipboardMonitor.isPaused.toggle()
+        sender.state = clipboardMonitor.isPaused ? .on : .off
+        sender.title = clipboardMonitor.isPaused ? "已暂停记录" : "暂停记录"
+        statusItem.button?.appearsDisabled = clipboardMonitor.isPaused
     }
 }
 

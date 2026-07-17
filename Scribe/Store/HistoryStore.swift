@@ -43,6 +43,36 @@ enum TimeFilter: String, CaseIterable, Identifiable {
     }
 }
 
+enum TypeFilter: String, CaseIterable, Identifiable {
+    case all, text, link, image, file
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .all: return "全部类型"
+        case .text: return "文本"
+        case .link: return "链接"
+        case .image: return "图片"
+        case .file: return "文件"
+        }
+    }
+
+    // 与 ClipItem.isLink 语义一致：http(s) 开头且单行
+    private static let linkCondition =
+        "(content LIKE 'http://%' OR content LIKE 'https://%') AND content NOT LIKE '%' || char(10) || '%'"
+
+    var condition: String? {
+        switch self {
+        case .all: return nil
+        case .text: return "type = 'text' AND NOT (\(Self.linkCondition))"
+        case .link: return "type = 'text' AND \(Self.linkCondition)"
+        case .image: return "type = 'image'"
+        case .file: return "type = 'file'"
+        }
+    }
+}
+
 final class HistoryStore {
     static let didChange = Notification.Name("HistoryStoreDidChange")
 
@@ -290,12 +320,16 @@ final class HistoryStore {
         var others: [ClipItem]
     }
 
-    /// pinned 不受时间筛选影响（但受搜索影响）；others 按 lastUsedAt 倒序。
-    func fetch(filter: TimeFilter, query: String, limit: Int = 300) -> FetchResult {
+    /// pinned 不受时间筛选影响（但受搜索/类型筛选影响）；others 按 lastUsedAt 倒序。
+    func fetch(filter: TimeFilter, type: TypeFilter = .all, query: String, limit: Int = 300) -> FetchResult {
         let query = query.trimmingCharacters(in: .whitespaces)
         return (try? dbQueue.read { db -> FetchResult in
             var conditions: [String] = []
             var arguments: [DatabaseValueConvertible] = []
+
+            if let typeCondition = type.condition {
+                conditions.append(typeCondition)
+            }
 
             if !query.isEmpty {
                 if query.count >= 3 {

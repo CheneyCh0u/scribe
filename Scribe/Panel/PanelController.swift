@@ -64,10 +64,27 @@ final class PanelController {
     }
 
     func show() {
+        let start = CFAbsoluteTimeGetCurrent()
         model.prepareForShow()
         positionOnActiveScreen()
         panel.makeKeyAndOrderFront(nil)
         installKeyMonitor()
+        DispatchQueue.main.async {
+            let ms = (CFAbsoluteTimeGetCurrent() - start) * 1000
+            NSLog("Scribe panel interactive in %.1f ms", ms)
+            #if DEBUG
+            // 统一日志会打码动态值，DEBUG 下另落文件便于性能验收
+            let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("Scribe/latency.log")
+            let line = String(format: "%.1f\n", ms)
+            if let handle = try? FileHandle(forWritingTo: url) {
+                handle.seekToEndOfFile()
+                handle.write(line.data(using: .utf8)!)
+            } else {
+                try? line.write(to: url, atomically: true, encoding: .utf8)
+            }
+            #endif
+        }
     }
 
     func hide() {
@@ -198,6 +215,10 @@ final class PanelController {
         if hasCommand, let chars = event.charactersIgnoringModifiers {
             if chars == "p" {
                 model.togglePinSelected()
+                return true
+            }
+            if chars == "o" {
+                model.openSelected()
                 return true
             }
             if let digit = Int(chars), (1...9).contains(digit) {

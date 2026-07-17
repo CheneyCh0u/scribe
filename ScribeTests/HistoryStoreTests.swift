@@ -112,6 +112,20 @@ final class HistoryStoreTests: XCTestCase {
         XCTAssertEqual(store.fetch(filter: .yesterday, query: "").others.map(\.content), ["yesterday-item"])
     }
 
+    // MARK: - 类型筛选
+
+    func testTypeFilter() throws {
+        let store = try makeStore()
+        record(store, "plain note")
+        record(store, "https://example.com/page")
+        store.recordFile(urls: [URL(fileURLWithPath: "/tmp/a.txt")], appBundleID: nil, appName: nil)
+
+        XCTAssertEqual(store.fetch(filter: .all, type: .text, query: "").others.map(\.content), ["plain note"])
+        XCTAssertEqual(store.fetch(filter: .all, type: .link, query: "").others.map(\.content), ["https://example.com/page"])
+        XCTAssertEqual(store.fetch(filter: .all, type: .file, query: "").others.count, 1)
+        XCTAssertEqual(store.fetch(filter: .all, type: .image, query: "").others.count, 0)
+    }
+
     // MARK: - 删除与清空
 
     func testDeleteAndClearAll() throws {

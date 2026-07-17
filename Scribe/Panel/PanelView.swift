@@ -32,6 +32,7 @@ struct PanelView: View {
                 .textFieldStyle(.plain)
                 .font(Tokens.Fonts.search)
                 .focused($searchFocused)
+            TypeFilterMenu(filter: $model.typeFilter)
             FilterMenu(filter: $model.filter)
         }
         .padding(.init(top: 13, leading: 16, bottom: 11, trailing: 16))
@@ -64,6 +65,10 @@ struct PanelView: View {
                                     // 双击 = 回填粘贴
                                     model.pasteSelected()
                                 }
+                                .onDrag {
+                                    model.selectedID = item.id
+                                    return Self.dragProvider(for: item)
+                                }
                                 .contextMenu {
                                     Button("粘贴") {
                                         model.selectedID = item.id
@@ -76,6 +81,12 @@ struct PanelView: View {
                                     Button("仅复制") {
                                         model.selectedID = item.id
                                         model.copySelected()
+                                    }
+                                    if let openTitle = Self.openTitle(for: item) {
+                                        Button(openTitle) {
+                                            model.selectedID = item.id
+                                            model.openSelected()
+                                        }
                                     }
                                     Divider()
                                     Button(item.pinned ? "取消置顶" : "置顶") {
@@ -174,6 +185,34 @@ struct PanelView: View {
         }
     }
 
+    /// 拖拽出面板：图片/文件给文件 URL，文本给字符串。
+    private static func dragProvider(for item: ClipItem) -> NSItemProvider {
+        switch item.type {
+        case "image":
+            if let path = item.imagePath,
+               let url = ImageStore.shared?.url(for: path),
+               let provider = NSItemProvider(contentsOf: url) {
+                return provider
+            }
+        case "file":
+            if let first = item.filePaths.first,
+               let provider = NSItemProvider(contentsOf: URL(fileURLWithPath: first)) {
+                return provider
+            }
+        default:
+            break
+        }
+        return NSItemProvider(object: item.content as NSString)
+    }
+
+    private static func openTitle(for item: ClipItem) -> String? {
+        switch item.type {
+        case "file": return "在访达中显示"
+        case "image": return "打开图片"
+        default: return item.isLink ? "打开链接" : nil
+        }
+    }
+
     private func previewFont(_ item: ClipItem) -> Font {
         // 简单启发：多行且含代码常见符号时用等宽
         let looksLikeCode = item.content.contains("\n")
@@ -267,6 +306,45 @@ struct PanelView: View {
                 .font(Tokens.Fonts.caption)
                 .foregroundStyle(Tokens.Colors.textTertiary)
         }
+    }
+}
+
+/// 类型筛选下拉，样式同时间筛选。
+private struct TypeFilterMenu: View {
+    @Binding var filter: TypeFilter
+    @State private var hovering = false
+
+    var body: some View {
+        Menu {
+            ForEach(TypeFilter.allCases) { option in
+                Button {
+                    filter = option
+                } label: {
+                    if option == filter {
+                        Label(option.title, systemImage: "checkmark")
+                    } else {
+                        Text(option.title)
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Text(filter.title)
+                    .font(Tokens.Fonts.label)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .semibold))
+                    .opacity(0.7)
+            }
+            .foregroundStyle(filter == .all ? AnyShapeStyle(Tokens.Colors.textSecondary) : AnyShapeStyle(Color.accentColor))
+            .padding(.init(top: 3, leading: 9, bottom: 3, trailing: 9))
+            .background(hovering ? Tokens.Colors.rowHover : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .fixedSize()
+        .onHover { hovering = $0 }
+        .animation(Tokens.Motion.fast, value: hovering)
     }
 }
 
