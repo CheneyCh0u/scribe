@@ -61,14 +61,18 @@ struct PanelView: View {
                                             }
                                         }
                                 )
-                                .onTapGesture(count: 2) {
-                                    // 双击 = 回填粘贴
-                                    model.pasteSelected()
-                                }
                                 .onDrag {
                                     model.selectedID = item.id
                                     return Self.dragProvider(for: item)
                                 }
+                                // 放在 onDrag 之后并提高优先级，避免双击被拖拽识别器抢占。
+                                .highPriorityGesture(
+                                    TapGesture(count: 2)
+                                        .onEnded {
+                                            model.selectedID = item.id
+                                            model.pasteSelected()
+                                        }
+                                )
                                 .contextMenu {
                                     Button("粘贴") {
                                         model.selectedID = item.id
