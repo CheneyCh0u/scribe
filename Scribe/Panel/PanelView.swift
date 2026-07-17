@@ -51,13 +51,18 @@ struct PanelView: View {
                         ForEach(section.items) { item in
                             RowView(item: item, isSelected: item.id == model.selectedID)
                                 .id(item.id)
+                                // 按下立即选中（零距离 drag 在 mouse-down 触发，避免等双击判定的 ~250ms 延迟）
+                                .simultaneousGesture(
+                                    DragGesture(minimumDistance: 0)
+                                        .onChanged { _ in
+                                            if model.selectedID != item.id {
+                                                model.selectedID = item.id
+                                            }
+                                        }
+                                )
                                 .onTapGesture(count: 2) {
-                                    // 双击 = 回填粘贴；单击 = 选中查看详情
-                                    model.selectedID = item.id
+                                    // 双击 = 回填粘贴
                                     model.pasteSelected()
-                                }
-                                .onTapGesture {
-                                    model.selectedID = item.id
                                 }
                         }
                     }
