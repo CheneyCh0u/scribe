@@ -1,0 +1,43 @@
+name: Scribe
+options:
+  bundleIdPrefix: com.cheney
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+packages:
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    from: 6.29.3
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts
+    from: 2.2.2
+
+targets:
+  Scribe:
+    type: application
+    platform: macOS
+    sources:
+      - Scribe
+    dependencies:
+      - package: GRDB
+        product: GRDB
+      - package: KeyboardShortcuts
+    info:
+      path: Scribe/Info.plist
+      properties:
+        CFBundleName: Scribe
+        CFBundleDisplayName: Scribe
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        LSUIElement: true
+        LSMinimumSystemVersion: "14.0"
+        NSHumanReadableCopyright: "© 2026 Cheney"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.cheney.scribe
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "-"
+        ENABLE_HARDENED_RUNTIME: false
+        COMBINE_HIDPI_IMAGES: true

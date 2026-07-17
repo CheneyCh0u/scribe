@@ -56,13 +56,13 @@
 
 ## Todolist（按阶段，每阶段独立可用）
 
-### 阶段 1 — MVP（文本闭环）
-- [ ] Xcode 工程搭建（LSUIElement agent、菜单栏图标、SwiftPM 依赖 GRDB/KeyboardShortcuts）
-- [ ] ClipboardMonitor：轮询采集文本，隐私类型过滤，去重置顶
-- [ ] HistoryStore：SQLite 建表 + FTS5，天数/条数淘汰
-- [ ] 面板：NSPanel 唤起、日期分组列表、键盘导航、回车复制
-- [ ] 搜索 + 时间筛选 chips
-- [ ] 全局快捷键（默认 ⌘⇧V）
+### 阶段 1 — MVP（文本闭环）✅ 2026-07-17
+- [x] Xcode 工程搭建（LSUIElement agent、菜单栏图标、SwiftPM 依赖 GRDB/KeyboardShortcuts，XcodeGen 管理）
+- [x] ClipboardMonitor：轮询采集文本，隐私类型过滤，去重置顶
+- [x] HistoryStore：SQLite 建表 + FTS5（trigram，中文子串可搜），天数/条数淘汰
+- [x] 面板：NSPanel 唤起、日期分组列表、键盘导航、回车复制
+- [x] 搜索 + 时间筛选 chips
+- [x] 全局快捷键（默认 ⌘⇧V）
 
 ### 阶段 2 — 回填粘贴
 - [ ] PasteService：写回剪贴板 + CGEvent ⌘V
@@ -77,9 +77,12 @@
 
 ### 阶段 4 — 设置与打磨
 - [ ] 设置页：快捷键录制、保留天数、排除应用、开机自启
-- [ ] Pin 收藏、⌘1-9 快选、右键菜单、单条删除/清空全部
+- [ ] 右键菜单、清空全部（Pin ⌘P、⌘1-9 快选、⌘⌫ 单条删除已随阶段 1 完成）
 - [ ] 存储占用展示
-- [ ] 来源应用图标展示
+- [ ] HistoryStore 单测（去重/淘汰/筛选/搜索，实现阶段 1 时追加）
+- [ ] 菜单栏菜单补「设置…」入口（实现阶段 1 时追加）
+
+注：来源应用图标展示已随阶段 1 面板实现提前完成。
 
 ### 阶段 5 — 分发（后置）
 - [ ] Developer ID 签名 + 公证

@@ -19,7 +19,12 @@ docs/
     tokens.md      # UI design tokens 唯一权威来源（色/圆角/布局/字体/动效）
     scribe-ui.html # UI 定稿视觉原型（与 tokens.md 同步维护）
     options.html   # 三方案探索记录（历史存档）
-Scribe/            # 应用源码（待创建）
+project.yml        # XcodeGen 工程定义（Scribe.xcodeproj 由它生成，不入库）
+Scribe/            # 应用源码
+  App/             # AppDelegate（菜单栏/热键/启动）、DesignTokens
+  Store/           # ClipItem、HistoryStore（GRDB + FTS5）
+  Clipboard/       # ClipboardMonitor（changeCount 轮询）
+  Panel/           # PanelController（NSPanel/键盘）、PanelModel、PanelView
 ```
 
 ## 流程与约定
@@ -28,8 +33,14 @@ Scribe/            # 应用源码（待创建）
 
 ## 当前进度
 
-功能范围与 Todolist 已定稿于 [docs/003-features.md](docs/003-features.md)（5 个阶段）。UI 已定稿于 [docs/004-ui-options.md](docs/004-ui-options.md)：原生材质双栏（左列表右详情），深浅随系统，色值按系统聚焦取样，权威 token 在 [docs/ui/tokens.md](docs/ui/tokens.md)。工程尚未创建，下一步：阶段 1 MVP。
+**阶段 1 MVP 已完成**（2026-07-17，文本采集→分组面板→搜索筛选→热键全链路已真机验证）。Todolist 见 [docs/003-features.md](docs/003-features.md)；UI 定稿见 [docs/004-ui-options.md](docs/004-ui-options.md)，权威 token 在 [docs/ui/tokens.md](docs/ui/tokens.md)。下一步：阶段 2 回填粘贴（CGEvent ⌘V + Accessibility 引导）。
 
 ## 常用命令
 
-待工程搭建后补充（构建、测试、打包命令）。
+```bash
+xcodegen generate        # project.yml → Scribe.xcodeproj（xcodeproj 不入库，改工程结构改 project.yml）
+xcodebuild -project Scribe.xcodeproj -scheme Scribe -configuration Debug build
+open ~/Library/Developer/Xcode/DerivedData/Scribe-*/Build/Products/Debug/Scribe.app
+```
+
+数据库位置：`~/Library/Application Support/Scribe/scribe.sqlite`（删除即重置）。
