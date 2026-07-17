@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
+            ImageStore.shared = try ImageStore()
             store = try HistoryStore()
         } catch {
             NSAlert(error: error).runModal()
@@ -34,6 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panelController = PanelController(store: store, clipboardMonitor: clipboardMonitor)
         clipboardMonitor.start()
         store.prune(days: Preferences.retentionDays, maxCount: Preferences.maxItemCount)
+        ImageStore.shared.cleanupOrphans(referenced: store.referencedImagePaths())
 
         setUpMainMenu()
         setUpStatusItem()

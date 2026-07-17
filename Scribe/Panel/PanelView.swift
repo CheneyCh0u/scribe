@@ -84,17 +84,10 @@ struct PanelView: View {
     private var preview: some View {
         if let item = model.selectedItem {
             VStack(alignment: .leading, spacing: Tokens.Space.s4) {
-                ScrollView {
-                    Text(item.isConcealed ? "•••••••••••• 已打码内容\n回车仍可粘贴原文" : item.content)
-                        .font(item.isConcealed ? Tokens.Fonts.body : previewFont(item))
-                        .foregroundStyle(Tokens.Colors.textPrimary)
-                        .textSelection(.enabled)
-                        .lineSpacing(4)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(13)
-                }
-                .background(Tokens.Colors.surfaceCard)
-                .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.card, style: .continuous))
+                previewContent(item)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Tokens.Colors.surfaceCard)
+                    .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.card, style: .continuous))
 
                 metaGrid(item)
             }
@@ -109,6 +102,51 @@ struct PanelView: View {
                 Spacer()
             }
             .frame(maxWidth: .infinity)
+        }
+    }
+
+    @ViewBuilder
+    private func previewContent(_ item: ClipItem) -> some View {
+        switch item.type {
+        case "image":
+            if let path = item.imagePath {
+                PreviewImageView(fileName: path)
+                    .padding(8)
+            }
+        case "file":
+            ScrollView {
+                VStack(alignment: .leading, spacing: Tokens.Space.s3) {
+                    ForEach(item.filePaths, id: \.self) { path in
+                        HStack(spacing: 9) {
+                            Image(nsImage: NSWorkspace.shared.icon(forFile: path))
+                                .resizable()
+                                .frame(width: 28, height: 28)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(URL(fileURLWithPath: path).lastPathComponent)
+                                    .font(Tokens.Fonts.body)
+                                    .foregroundStyle(Tokens.Colors.textPrimary)
+                                Text(path)
+                                    .font(Tokens.Fonts.caption)
+                                    .foregroundStyle(Tokens.Colors.textTertiary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                            }
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(13)
+            }
+        default:
+            ScrollView {
+                Text(item.isConcealed ? "•••••••••••• 已打码内容\n回车仍可粘贴原文" : item.content)
+                    .font(item.isConcealed ? Tokens.Fonts.body : previewFont(item))
+                    .foregroundStyle(Tokens.Colors.textPrimary)
+                    .textSelection(.enabled)
+                    .lineSpacing(4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(13)
+            }
         }
     }
 
@@ -131,8 +169,24 @@ struct PanelView: View {
             }
             GridRow {
                 metaLabel("类型")
-                metaValue("\(item.typeDisplayName) · \(item.characterCount) 字符")
+                metaValue(typeMeta(item))
             }
+        }
+    }
+
+    private func typeMeta(_ item: ClipItem) -> String {
+        switch item.type {
+        case "image":
+            var parts = [item.typeDisplayName]
+            if let dimension = item.dimensionLabel { parts.append(dimension) }
+            if let size = item.sizeLabel { parts.append(size) }
+            return parts.joined(separator: " · ")
+        case "file":
+            var parts = [item.typeDisplayName]
+            if let size = item.sizeLabel { parts.append(size) }
+            return parts.joined(separator: " · ")
+        default:
+            return "\(item.typeDisplayName) · \(item.characterCount) 字符"
         }
     }
 
@@ -165,6 +219,7 @@ struct PanelView: View {
             hint("⇧↩", "纯文本")
             hint("⌥↩", "仅复制")
             hint("⌘1-9", "快选")
+            hint("空格", "大图")
             hint("⌘⌫", "删除")
             hint("esc", "关闭")
             Spacer()
@@ -187,6 +242,59 @@ struct PanelView: View {
             Text(label)
                 .font(Tokens.Fonts.caption)
                 .foregroundStyle(Tokens.Colors.textTertiary)
+        }
+    }
+}
+
+// MARK: - 图片组件
+
+/// 列表缩略图：懒加载 + NSCache，只解码 ≤400px 缩略图文件（内存红线关键）。
+private struct ThumbnailView: View {
+    let fileName: String
+    @State private var image: NSImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(nsImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill(Tokens.Colors.rowHover)
+            }
+        }
+        .frame(width: 36, height: 26)
+        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+        .task(id: fileName) {
+            image = await ImageStore.shared?.loadThumbnail(for: fileName)
+        }
+    }
+}
+
+/// 右栏图片预览：按需降采样解码（≤1600px），原图仅回填时读取。
+private struct PreviewImageView: View {
+    let fileName: String
+    @State private var image: NSImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(nsImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ProgressView()
+                    .controlSize(.small)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .task(id: fileName) {
+            guard let url = ImageStore.shared?.url(for: fileName) else { return }
+            image = await Task.detached(priority: .userInitiated) {
+                ImageStore.downsample(url: url, maxPixel: 1600)
+            }.value
         }
     }
 }
@@ -239,7 +347,7 @@ private struct RowView: View {
 
     var body: some View {
         HStack(spacing: 9) {
-            appIcon
+            leadingVisual
             VStack(alignment: .leading, spacing: 1) {
                 Text(item.isConcealed ? "••••••••••••" : item.preview)
                     .font(Tokens.Fonts.body)
@@ -285,8 +393,36 @@ private struct RowView: View {
     private var subtitle: String {
         var parts: [String] = []
         if let appName = item.appName { parts.append(appName) }
-        parts.append(item.isConcealed ? "已打码" : "\(item.characterCount) 字符")
+        switch item.type {
+        case "image":
+            if let dimension = item.dimensionLabel { parts.append(dimension) }
+            if let size = item.sizeLabel { parts.append(size) }
+        case "file":
+            parts.append(item.typeDisplayName)
+            if let size = item.sizeLabel { parts.append(size) }
+        default:
+            parts.append(item.isConcealed ? "已打码" : "\(item.characterCount) 字符")
+        }
         return parts.joined(separator: " · ")
+    }
+
+    /// 行首视觉：图片显示缩略图，文件显示文件图标，文本显示来源应用图标。
+    @ViewBuilder
+    private var leadingVisual: some View {
+        switch item.type {
+        case "image":
+            if let path = item.imagePath {
+                ThumbnailView(fileName: path)
+            }
+        case "file":
+            if let firstPath = item.filePaths.first {
+                Image(nsImage: NSWorkspace.shared.icon(forFile: firstPath))
+                    .resizable()
+                    .frame(width: 22, height: 22)
+            }
+        default:
+            appIcon
+        }
     }
 
     private var appIcon: some View {

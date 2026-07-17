@@ -33,7 +33,7 @@ Scribe/            # 应用源码
 
 ## 当前进度
 
-**阶段 1、2 已完成**（2026-07-17）。阶段 1 全链路真机验证过；阶段 2（回填粘贴：CGEvent ⌘V、RTF 保真、⇧↩/⌥↩、单击即粘贴、授权引导与降级）代码完成，粘贴动作待用户授权辅助功能后人工验收。Todolist 见 [docs/003-features.md](docs/003-features.md)；UI 定稿见 [docs/004-ui-options.md](docs/004-ui-options.md)，权威 token 在 [docs/ui/tokens.md](docs/ui/tokens.md)。下一步：阶段 3 图片与文件。
+**阶段 1、2、3 已完成**（2026-07-17）：文本/图片/文件采集与回填、双栏面板、搜索筛选、热键、空格大图预览全部落地；常驻内存实测 26MB（红线 50MB）。Todolist 见 [docs/003-features.md](docs/003-features.md)；UI 定稿见 [docs/004-ui-options.md](docs/004-ui-options.md)，权威 token 在 [docs/ui/tokens.md](docs/ui/tokens.md)。下一步：阶段 4 设置页与打磨（设置窗口、右键菜单、清空、存储占用、单测）。
 
 ## 常用命令
 

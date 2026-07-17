@@ -101,6 +101,14 @@ final class HistoryStore {
                 t.add(column: "rtfData", .blob)
             }
         }
+        migrator.registerMigration("v3-image-file") { db in
+            try db.alter(table: "item") { t in
+                t.add(column: "imagePath", .text)
+                t.add(column: "imageWidth", .integer)
+                t.add(column: "imageHeight", .integer)
+                t.add(column: "byteSize", .integer)
+            }
+        }
         return migrator
     }
 
@@ -140,6 +148,85 @@ final class HistoryStore {
         }
     }
 
+    /// 图片：>50MB 跳过；按数据哈希去重；原图与缩略图由 ImageStore 落盘。
+    func recordImage(pngData: Data, appBundleID: String?, appName: String?) {
+        guard pngData.count <= 50_000_000 else {
+            NSLog("HistoryStore: image larger than 50MB skipped")
+            return
+        }
+        let hash = SHA256.hash(data: pngData).map { String(format: "%02x", $0) }.joined()
+        do {
+            let bumped = try dbQueue.write { db -> Bool in
+                if var existing = try ClipItem.filter(Column("contentHash") == hash).fetchOne(db) {
+                    existing.lastUsedAt = Date()
+                    try existing.update(db)
+                    return true
+                }
+                return false
+            }
+            if !bumped {
+                guard let saved = try ImageStore.shared?.save(pngData: pngData, hash: hash) else { return }
+                let label = "图片 \(saved.width)×\(saved.height)"
+                var item = ClipItem(
+                    id: nil, type: "image", content: label, rtfData: nil,
+                    preview: label, contentHash: hash,
+                    appBundleID: appBundleID, appName: appName,
+                    isConcealed: false, pinned: false,
+                    createdAt: Date(), lastUsedAt: Date(),
+                    imagePath: saved.fileName, imageWidth: saved.width,
+                    imageHeight: saved.height, byteSize: pngData.count
+                )
+                try dbQueue.write { db in try item.insert(db) }
+            }
+            notifyChanged()
+        } catch {
+            NSLog("HistoryStore.recordImage failed: \(error)")
+        }
+    }
+
+    /// 文件引用：content 存路径列表（\n 分隔），按路径列表哈希去重。
+    func recordFile(urls: [URL], appBundleID: String?, appName: String?) {
+        guard !urls.isEmpty else { return }
+        let paths = urls.map(\.path)
+        let content = paths.joined(separator: "\n")
+        let hash = Self.hash(of: "file:" + content)
+        let preview = urls.map(\.lastPathComponent).joined(separator: "、")
+        let totalBytes = paths.reduce(0) { sum, path in
+            let attrs = try? FileManager.default.attributesOfItem(atPath: path)
+            return sum + ((attrs?[.size] as? Int) ?? 0)
+        }
+        do {
+            try dbQueue.write { db in
+                if var existing = try ClipItem.filter(Column("contentHash") == hash).fetchOne(db) {
+                    existing.lastUsedAt = Date()
+                    try existing.update(db)
+                } else {
+                    var item = ClipItem(
+                        id: nil, type: "file", content: content, rtfData: nil,
+                        preview: String(preview.prefix(200)), contentHash: hash,
+                        appBundleID: appBundleID, appName: appName,
+                        isConcealed: false, pinned: false,
+                        createdAt: Date(), lastUsedAt: Date(),
+                        imagePath: nil, imageWidth: nil, imageHeight: nil,
+                        byteSize: totalBytes > 0 ? totalBytes : nil
+                    )
+                    try item.insert(db)
+                }
+            }
+            notifyChanged()
+        } catch {
+            NSLog("HistoryStore.recordFile failed: \(error)")
+        }
+    }
+
+    /// 孤儿清理用：DB 当前引用的所有图片文件名。
+    func referencedImagePaths() -> Set<String> {
+        let paths = (try? dbQueue.read { db in
+            try String.fetchAll(db, sql: "SELECT imagePath FROM item WHERE imagePath IS NOT NULL")
+        }) ?? []
+        return Set(paths)
+    }
+
     func bumpUsed(id: Int64) {
         try? dbQueue.write { db in
             try db.execute(sql: "UPDATE item SET lastUsedAt = ? WHERE id = ?", arguments: [Date(), id])
@@ -155,26 +242,33 @@ final class HistoryStore {
     }
 
     func delete(id: Int64) {
-        _ = try? dbQueue.write { db in
+        let imagePath = try? dbQueue.write { db -> String? in
+            let path = try String.fetchOne(db, sql: "SELECT imagePath FROM item WHERE id = ?", arguments: [id])
             try ClipItem.deleteOne(db, key: id)
+            return path
         }
+        if let path = imagePath ?? nil { ImageStore.shared?.deleteFiles(imagePaths: [path]) }
         notifyChanged()
     }
 
-    /// 天数 + 条数双重淘汰，pinned 不淘汰。
+    /// 天数 + 条数双重淘汰，pinned 不淘汰；被淘汰的图片条目联动删文件。
     func prune(days: Int, maxCount: Int) {
         let cutoff = Calendar.current.date(byAdding: .day, value: -days, to: Date())!
-        try? dbQueue.write { db in
-            try db.execute(
-                sql: "DELETE FROM item WHERE pinned = 0 AND lastUsedAt < ?",
-                arguments: [cutoff]
-            )
-            try db.execute(sql: """
-                DELETE FROM item WHERE pinned = 0 AND id IN (
+        let doomedImagePaths = (try? dbQueue.write { db -> [String] in
+            let condition = """
+                pinned = 0 AND (lastUsedAt < ? OR id IN (
                     SELECT id FROM item WHERE pinned = 0
                     ORDER BY lastUsedAt DESC LIMIT -1 OFFSET ?
-                )
-                """, arguments: [maxCount])
+                ))
+                """
+            let paths = try String.fetchAll(db, sql: """
+                SELECT imagePath FROM item WHERE imagePath IS NOT NULL AND \(condition)
+                """, arguments: [cutoff, maxCount])
+            try db.execute(sql: "DELETE FROM item WHERE \(condition)", arguments: [cutoff, maxCount])
+            return paths
+        }) ?? []
+        if !doomedImagePaths.isEmpty {
+            ImageStore.shared?.deleteFiles(imagePaths: doomedImagePaths)
         }
         notifyChanged()
     }

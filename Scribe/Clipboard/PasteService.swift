@@ -20,15 +20,32 @@ enum PasteService {
         NSWorkspace.shared.open(url)
     }
 
-    /// 写回剪贴板。plainText 为 true 时只写纯文本（丢弃 RTF）。
+    /// 按原始类型写回剪贴板。plainText 为 true 时文本只写纯文本（丢弃 RTF）。
     static func writeToPasteboard(_ item: ClipItem, plainText: Bool, monitor: ClipboardMonitor) {
         monitor.suppressNextChange()
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        if !plainText, let rtf = item.rtfData {
-            pasteboard.setData(rtf, forType: .rtf)
+
+        switch item.type {
+        case "image":
+            guard let path = item.imagePath,
+                  let url = ImageStore.shared?.url(for: path),
+                  let data = try? Data(contentsOf: url) else { return }
+            pasteboard.setData(data, forType: .png)
+            // 兼容只认 TIFF 的应用
+            if let tiff = NSBitmapImageRep(data: data)?.tiffRepresentation {
+                pasteboard.setData(tiff, forType: .tiff)
+            }
+        case "file":
+            let urls = item.filePaths.map { URL(fileURLWithPath: $0) }
+            pasteboard.writeObjects(urls as [NSURL])
+            pasteboard.setString(item.content, forType: .string)
+        default:
+            if !plainText, let rtf = item.rtfData {
+                pasteboard.setData(rtf, forType: .rtf)
+            }
+            pasteboard.setString(item.content, forType: .string)
         }
-        pasteboard.setString(item.content, forType: .string)
     }
 
     /// 面板隐藏后调用：模拟 ⌘V。返回是否真正发出（未授权返回 false）。

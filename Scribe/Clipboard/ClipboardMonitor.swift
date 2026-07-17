@@ -44,11 +44,6 @@ final class ClipboardMonitor {
         let isConcealed = types.contains(Self.concealedType)
         if isConcealed && !Preferences.recordConcealed { return }
 
-        guard let text = pasteboard.string(forType: .string) else { return }
-        // RTF 原文另存用于保真回填（1MB 以内，超大富文本退化为纯文本）
-        var rtfData = pasteboard.data(forType: .rtf)
-        if let data = rtfData, data.count > 1_000_000 { rtfData = nil }
-
         // 面板内选词复制（面板是 key window 时）来源记为 Scribe；
         // 否则记前台应用（本应用是 agent，永不成为 frontmost）
         var bundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
@@ -57,6 +52,26 @@ final class ClipboardMonitor {
             bundleID = Bundle.main.bundleIdentifier
             appName = "Scribe"
         }
+
+        // 类型优先级：文件引用 > 图片 > 文本
+        if types.contains(.fileURL),
+           let urls = pasteboard.readObjects(forClasses: [NSURL.self],
+                                             options: [.urlReadingFileURLsOnly: true]) as? [URL],
+           !urls.isEmpty {
+            store.recordFile(urls: urls, appBundleID: bundleID, appName: appName)
+            return
+        }
+
+        if let pngData = pngImageData(from: pasteboard) {
+            store.recordImage(pngData: pngData, appBundleID: bundleID, appName: appName)
+            return
+        }
+
+        guard let text = pasteboard.string(forType: .string) else { return }
+        // RTF 原文另存用于保真回填（1MB 以内，超大富文本退化为纯文本）
+        var rtfData = pasteboard.data(forType: .rtf)
+        if let data = rtfData, data.count > 1_000_000 { rtfData = nil }
+
         store.record(
             text: text,
             rtfData: rtfData,
@@ -64,5 +79,14 @@ final class ClipboardMonitor {
             appName: appName,
             isConcealed: isConcealed
         )
+    }
+
+    /// 取剪贴板图片并统一为 PNG（优先原生 PNG，其次 TIFF 转码）。
+    private func pngImageData(from pasteboard: NSPasteboard) -> Data? {
+        if let png = pasteboard.data(forType: .png) { return png }
+        if let tiff = pasteboard.data(forType: .tiff) {
+            return NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:])
+        }
+        return nil
     }
 }

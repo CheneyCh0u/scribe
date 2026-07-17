@@ -13,6 +13,7 @@ final class PanelController {
     private let model: PanelModel
     private var keyMonitor: Any?
     private var resignObserver: NSObjectProtocol?
+    private var imageOverlay: NSPanel?
 
     init(store: HistoryStore, clipboardMonitor: ClipboardMonitor) {
         model = PanelModel(store: store, clipboardMonitor: clipboardMonitor)
@@ -70,8 +71,59 @@ final class PanelController {
     }
 
     func hide() {
+        hideImageOverlay()
         removeKeyMonitor()
         panel.orderOut(nil)
+    }
+
+    // MARK: - 空格大图预览
+
+    private func toggleImageOverlay() {
+        if imageOverlay?.isVisible == true {
+            hideImageOverlay()
+            return
+        }
+        guard let item = model.selectedItem, item.type == "image",
+              let path = item.imagePath,
+              let url = ImageStore.shared?.url(for: path),
+              let image = ImageStore.downsample(url: url, maxPixel: 2400),
+              let screen = panel.screen ?? NSScreen.main else { return }
+
+        // 适配屏幕 85%，等比缩放
+        let maxSize = CGSize(width: screen.visibleFrame.width * 0.85,
+                             height: screen.visibleFrame.height * 0.85)
+        let scale = min(maxSize.width / image.size.width, maxSize.height / image.size.height, 1)
+        let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+
+        let overlay = NSPanel(
+            contentRect: NSRect(origin: .zero, size: size),
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        overlay.level = .modalPanel
+        overlay.isOpaque = false
+        overlay.backgroundColor = .clear
+        overlay.hasShadow = true
+
+        let imageView = NSImageView(image: image)
+        imageView.imageScaling = .scaleProportionallyUpOrDown
+        imageView.wantsLayer = true
+        imageView.layer?.cornerRadius = 12
+        imageView.layer?.cornerCurve = .continuous
+        imageView.layer?.masksToBounds = true
+        overlay.contentView = imageView
+
+        let frame = screen.visibleFrame
+        overlay.setFrameOrigin(NSPoint(x: frame.midX - size.width / 2,
+                                       y: frame.midY - size.height / 2))
+        overlay.orderFront(nil)
+        imageOverlay = overlay
+    }
+
+    private func hideImageOverlay() {
+        imageOverlay?.orderOut(nil)
+        imageOverlay = nil
     }
 
     /// 居中于鼠标所在屏幕（略高于几何中心）。
@@ -107,7 +159,19 @@ final class PanelController {
     private func handle(_ event: NSEvent) -> Bool {
         let hasCommand = event.modifierFlags.contains(.command)
 
+        // 大图预览打开时：任意确认/取消键先关闭它
+        if imageOverlay?.isVisible == true, [49, 53, 36].contains(event.keyCode) {
+            hideImageOverlay()
+            return true
+        }
+
         switch event.keyCode {
+        case 49 where model.searchText.isEmpty: // 空格（仅搜索为空时，避免吃掉输入）
+            if model.selectedItem?.type == "image" {
+                toggleImageOverlay()
+                return true
+            }
+            return false
         case 126: // ↑
             model.moveSelection(by: -1)
             return true
