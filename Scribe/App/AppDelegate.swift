@@ -35,12 +35,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         clipboardMonitor.start()
         store.prune(days: Preferences.retentionDays, maxCount: Preferences.maxItemCount)
 
+        setUpMainMenu()
         setUpStatusItem()
         KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak self] in
             Task { @MainActor in
                 self?.panelController.toggle()
             }
         }
+    }
+
+    /// LSUIElement 应用没有可见主菜单，但 ⌘C/⌘V/⌘X/⌘A 等编辑键位依赖菜单路由，
+    /// 不挂这个菜单，面板里（右栏选词、搜索框）的复制粘贴全部失效。
+    private func setUpMainMenu() {
+        let mainMenu = NSMenu()
+        let editItem = NSMenuItem()
+        let editMenu = NSMenu(title: "编辑")
+        editMenu.addItem(withTitle: "撤销", action: Selector(("undo:")), keyEquivalent: "z")
+        editMenu.addItem(withTitle: "重做", action: Selector(("redo:")), keyEquivalent: "Z")
+        editMenu.addItem(.separator())
+        editMenu.addItem(withTitle: "剪切", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "拷贝", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "粘贴", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: "全选", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        editItem.submenu = editMenu
+        mainMenu.addItem(editItem)
+        NSApp.mainMenu = mainMenu
     }
 
     private func setUpStatusItem() {

@@ -49,12 +49,19 @@ final class ClipboardMonitor {
         var rtfData = pasteboard.data(forType: .rtf)
         if let data = rtfData, data.count > 1_000_000 { rtfData = nil }
 
-        let app = NSWorkspace.shared.frontmostApplication
+        // 面板内选词复制（面板是 key window 时）来源记为 Scribe；
+        // 否则记前台应用（本应用是 agent，永不成为 frontmost）
+        var bundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        var appName = NSWorkspace.shared.frontmostApplication?.localizedName
+        if NSApp.keyWindow != nil {
+            bundleID = Bundle.main.bundleIdentifier
+            appName = "Scribe"
+        }
         store.record(
             text: text,
             rtfData: rtfData,
-            appBundleID: app?.bundleIdentifier,
-            appName: app?.localizedName,
+            appBundleID: bundleID,
+            appName: appName,
             isConcealed: isConcealed
         )
     }
