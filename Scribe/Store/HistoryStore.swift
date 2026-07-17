@@ -151,7 +151,7 @@ final class HistoryStore {
         do {
             try dbQueue.write { db in
                 if var existing = try ClipItem.filter(Column("contentHash") == hash).fetchOne(db) {
-                    existing.lastUsedAt = Date()
+                    existing.lastUsedAt = try Self.nextLastUsedAt(in: db)
                     if let rtfData { existing.rtfData = rtfData }
                     try existing.update(db)
                 } else {
@@ -188,7 +188,7 @@ final class HistoryStore {
         do {
             let bumped = try dbQueue.write { db -> Bool in
                 if var existing = try ClipItem.filter(Column("contentHash") == hash).fetchOne(db) {
-                    existing.lastUsedAt = Date()
+                    existing.lastUsedAt = try Self.nextLastUsedAt(in: db)
                     try existing.update(db)
                     return true
                 }
@@ -228,7 +228,7 @@ final class HistoryStore {
         do {
             try dbQueue.write { db in
                 if var existing = try ClipItem.filter(Column("contentHash") == hash).fetchOne(db) {
-                    existing.lastUsedAt = Date()
+                    existing.lastUsedAt = try Self.nextLastUsedAt(in: db)
                     try existing.update(db)
                 } else {
                     var item = ClipItem(
@@ -269,7 +269,8 @@ final class HistoryStore {
 
     func bumpUsed(id: Int64) {
         try? dbQueue.write { db in
-            try db.execute(sql: "UPDATE item SET lastUsedAt = ? WHERE id = ?", arguments: [Date(), id])
+            let lastUsedAt = try Self.nextLastUsedAt(in: db)
+            try db.execute(sql: "UPDATE item SET lastUsedAt = ? WHERE id = ?", arguments: [lastUsedAt, id])
         }
         notifyChanged()
     }
@@ -383,10 +384,19 @@ final class HistoryStore {
         SHA256.hash(data: Data(text.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 
+    /// GRDB 将 Date 存到毫秒。确保旧条目再次使用后严格晚于当前最新条目，
+    /// 避免同毫秒写入时由 id 排序导致置顶失败。
+    private static func nextLastUsedAt(in db: Database) throws -> Date {
+        guard let latest = try Date.fetchOne(db, sql: "SELECT MAX(lastUsedAt) FROM item") else {
+            return Date()
+        }
+        return max(Date(), latest.addingTimeInterval(0.001))
+    }
+
 #if DEBUG
     /// 仅测试用：直接改写 lastUsedAt。
-    func debugSetLastUsed(id: Int64, date: Date) {
-        try? dbQueue.write { db in
+    func debugSetLastUsed(id: Int64, date: Date) throws {
+        try dbQueue.write { db in
             try db.execute(sql: "UPDATE item SET lastUsedAt = ? WHERE id = ?", arguments: [date, id])
         }
     }

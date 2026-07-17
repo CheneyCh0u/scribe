@@ -16,9 +16,13 @@ final class HistoryStoreTests: XCTestCase {
         let store = try makeStore()
         record(store, "hello")
         record(store, "world")
-        // 拉开时间差（真实场景复制间隔远大于毫秒；同毫秒写入排序无意义）
-        let hello = store.fetch(filter: .all, query: "").others.first { $0.content == "hello" }!
-        store.debugSetLastUsed(id: hello.id!, date: Date().addingTimeInterval(-60))
+
+        // 模拟同毫秒写入或系统时钟回拨：旧实现会让 id 较新的 world 保持在顶部。
+        let before = store.fetch(filter: .all, query: "").others
+        let future = Date().addingTimeInterval(60)
+        for item in before {
+            try store.debugSetLastUsed(id: item.id!, date: future)
+        }
 
         record(store, "hello") // 重复：应置顶而非新增
 
@@ -45,8 +49,8 @@ final class HistoryStoreTests: XCTestCase {
         let oldDate = Calendar.current.date(byAdding: .day, value: -60, to: Date())!
         let oldUnpinned = all.first { $0.content == "old-unpinned" }!
         let oldPinned = all.first { $0.content == "old-pinned" }!
-        store.debugSetLastUsed(id: oldUnpinned.id!, date: oldDate)
-        store.debugSetLastUsed(id: oldPinned.id!, date: oldDate)
+        try store.debugSetLastUsed(id: oldUnpinned.id!, date: oldDate)
+        try store.debugSetLastUsed(id: oldPinned.id!, date: oldDate)
         store.togglePin(id: oldPinned.id!)
 
         store.prune(days: 30, maxCount: 1000)
@@ -62,7 +66,7 @@ final class HistoryStoreTests: XCTestCase {
         // 保证 lastUsedAt 严格递增
         let all = store.fetch(filter: .all, query: "").others
         for (offset, item) in all.reversed().enumerated() {
-            store.debugSetLastUsed(id: item.id!, date: Date().addingTimeInterval(Double(offset)))
+            try store.debugSetLastUsed(id: item.id!, date: Date().addingTimeInterval(Double(offset)))
         }
 
         store.prune(days: 365, maxCount: 3)
@@ -106,7 +110,7 @@ final class HistoryStoreTests: XCTestCase {
 
         let yesterday = Calendar.current.date(byAdding: .hour, value: -30, to: Date())!
         let item = store.fetch(filter: .all, query: "").others.first { $0.content == "yesterday-item" }!
-        store.debugSetLastUsed(id: item.id!, date: yesterday)
+        try store.debugSetLastUsed(id: item.id!, date: yesterday)
 
         XCTAssertEqual(store.fetch(filter: .today, query: "").others.map(\.content), ["today-item"])
         XCTAssertEqual(store.fetch(filter: .yesterday, query: "").others.map(\.content), ["yesterday-item"])
