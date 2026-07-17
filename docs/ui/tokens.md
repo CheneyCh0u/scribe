@@ -45,7 +45,7 @@
 | `layout.panel` | 840 × 540 pt，屏幕居中唤起 |
 | `layout.listColumn` | 320 pt |
 | `layout.rowHeight` | 46 pt |
-| `layout.settingsWindow` | 460 pt 宽 |
+| `layout.settingsWindow` | 460 × 420 pt |
 | `spacing` 刻度 | 4 / 6 / 8 / 12 / 16 / 20（`Spacing.s1`-`s6`） |
 
 ## 字体

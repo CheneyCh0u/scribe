@@ -23,7 +23,7 @@ enum Tokens {
     enum Layout {
         static let panelSize = CGSize(width: 840, height: 540)
         static let listColumnWidth: CGFloat = 320
-        static let settingsWidth: CGFloat = 460
+        static let settingsSize = CGSize(width: 460, height: 420)
     }
 
     enum Fonts {

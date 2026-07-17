@@ -177,7 +177,7 @@
 
   /* ═══════════ 设置窗口 ═══════════ */
   .settings{
-    width:460px; border-radius:12px; overflow:hidden; font-size:var(--text-body);
+    width:460px; min-height:420px; border-radius:12px; overflow:hidden; font-size:var(--text-body);
     background:var(--settings-bg); color:var(--text-1);
     box-shadow:0 18px 50px rgba(0,0,0,0.35), 0 0 0 0.5px rgba(0,0,0,0.2);
   }
@@ -419,7 +419,7 @@
 </div>
 </div>
 
-<h2>设置 · 460pt 宽 · 深浅并排</h2>
+<h2>设置 · 460×420pt · 深浅并排</h2>
 <div class="duo">
   <div class="light">
     <div class="settings">
@@ -523,7 +523,7 @@
   <tr><td><code>pin.indicator</code></td><td><span class="sw" style="background:#e6a23c;"></span>#E6A23C</td><td>同值</td><td>固定色</td><td>自定义</td></tr>
   <tr><td><code>danger</code></td><td><span class="sw" style="background:#e0382e;"></span>#E0382E</td><td><span class="sw" style="background:#ff6961;"></span>#FF6961</td><td>Color(nsColor:.systemRed)</td><td>系统色（自动）</td></tr>
   <tr><td><code>radius.panel / row / card / chip</code></td><td colspan="2">22 / 10 / 8 / 胶囊（聚焦大圆角）</td><td>RoundedRectangle 同值</td><td>原语</td></tr>
-  <tr><td><code>layout.panel</code></td><td colspan="2">840×540，列表栏 320，行高 46，设置窗 460</td><td>frame 同值</td><td>原语</td></tr>
+  <tr><td><code>layout.panel</code></td><td colspan="2">840×540，列表栏 320，行高 46，设置窗 460×420</td><td>frame 同值</td><td>原语</td></tr>
   <tr><td><code>spacing 刻度</code></td><td colspan="2">4 / 6 / 8 / 12 / 16 / 20</td><td>Spacing 枚举 s1-s6</td><td>原语</td></tr>
   <tr><td><code>font.search / title / body / label / caption</code></td><td colspan="2">16 / 15 / 13 / 12 / 11，SF Pro + PingFang SC；代码 SF Mono 12</td><td>.system(size:) / .monospaced()</td><td>原语</td></tr>
   <tr><td><code>motion.fast / base</code></td><td colspan="2">120ms / 180ms，cubic-bezier(0.16,1,0.3,1)；面板出现 scale 0.98→1 + fade</td><td>.easeOut(duration: 0.12 / 0.18)</td><td>原语</td></tr>

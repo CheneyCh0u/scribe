@@ -14,7 +14,10 @@ struct SettingsView: View {
             StorageSettingsTab(store: store)
                 .tabItem { Label("存储", systemImage: "internaldrive") }
         }
-        .frame(width: Tokens.Layout.settingsWidth)
+        .frame(
+            width: Tokens.Layout.settingsSize.width,
+            height: Tokens.Layout.settingsSize.height
+        )
     }
 }
 
