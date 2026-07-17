@@ -12,6 +12,7 @@ Swift 6 原生：AppKit `NSPanel` 弹窗 + SwiftUI 内容视图；`NSPasteboard.
 
 ```
 CLAUDE.md          # 本文件：项目现状摘要 + 索引，保持精简、永不过时
+AGENTS.md          # → CLAUDE.md 的软链接（供非 Claude Code 的 agent 识别），永远不要单独编辑它
 docs/
   process.md       # 开发流程、文档维护规则、项目约定（权威来源）
   NNN-主题.md       # 设计决策记录，编号递增，只增不改
