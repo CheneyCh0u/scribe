@@ -26,9 +26,22 @@
 - **隐私**：`TransientType` 内容始终不记录；`ConcealedType`（密码类）默认记录但列表打码显示，用户可在设置中关闭记录（决策见 003）。
 - **语言**：提交信息、代码注释用英文；文档用中文。
 
+## GitHub 协作流程
+
+所有改动必须遵循 Issue-first 工作流，完整规则见 [007-git-workflow.md](007-git-workflow.md)：
+
+1. 修改前创建或认领开放 Issue。
+2. 从 `origin/main` 创建包含 Issue ID 的分支，禁止在 `main` 上实施。
+3. 使用 Conventional Commit，提交正文写 `Refs #ID`。
+4. 通过 PR 合并到 `main`，正文必须写 `Closes #ID`。
+5. 只有仓库拥有者可以合并；合并后确认 Issue 自动关闭。
+6. 普通提交和 PR 不打发布 tag。只有用户明确要求发布时才运行 `scripts/release.sh`。
+
+Issue 模板位于 `.github/ISSUE_TEMPLATE/change.yml`，PR 模板位于 `.github/pull_request_template.md`。Agent 执行仓库变更时使用项目级 `git-workflow` skill。
+
 ## 发布流程
 
-发布唯一入口是 `bash scripts/release.sh`（自动打 `yyyy.mm.dd-sn` tag 并推送，触发 GitHub Actions 构建挂 Release）。规则、限制与排查见 [005-ci-release.md](005-ci-release.md)。发布前确保 main 已推送、单测通过（流水线内也有测试门）。
+发布唯一入口是 `bash scripts/release.sh`（自动打 `yyyy.mm.dd-sn` tag 并推送，触发 GitHub Actions 构建挂 Release）。只在用户明确要求发布时执行；普通 PR 合并不发布。规则、限制与排查见 [005-ci-release.md](005-ci-release.md)。发布前确保 main 已推送、单测通过（流水线内也有测试门）。
 
 ## 实施节奏
 

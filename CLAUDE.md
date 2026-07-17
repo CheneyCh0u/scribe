@@ -14,6 +14,9 @@ Swift 6 原生：AppKit `NSPanel` 弹窗 + SwiftUI 内容视图；`NSPasteboard.
 README.md          # 对外介绍（特性/安装/使用），功能变化时同步更新
 CLAUDE.md          # 本文件：项目现状摘要 + 索引，保持精简、永不过时
 AGENTS.md          # → CLAUDE.md 的软链接（供非 Claude Code 的 agent 识别），永远不要单独编辑它
+.claude/skills/    # 项目级 skills（真实目录）
+.agents/skills     # → ../.claude/skills 的软链接，两套 agent 共用同一份 skills
+.github/           # Issue/PR 模板与 GitHub Actions
 docs/
   process.md       # 开发流程、文档维护规则、项目约定（权威来源）
   NNN-主题.md       # 设计决策记录，编号递增，只增不改
@@ -31,11 +34,11 @@ Scribe/            # 应用源码
 
 ## 流程与约定
 
-见 [docs/process.md](docs/process.md)：文档体系分工、CLAUDE.md 维护规则、性能/隐私红线、语言约定。
+见 [docs/process.md](docs/process.md)：文档体系分工、CLAUDE.md 维护规则、性能/隐私红线、语言约定。所有改动必须先建 Issue，再从 Issue ID 建分支，通过带 `Closes #ID` 的 PR 合并；完整规则见 [docs/007-git-workflow.md](docs/007-git-workflow.md)，agent 使用项目级 `git-workflow` skill。
 
 ## 当前进度
 
-**阶段 1-4 已完成**（2026-07-17）：采集/回填（文本/图片/文件）、双栏面板、搜索筛选、热键、设置页（快捷键/保留策略/隐私/排除应用/自启/存储/清空）、右键菜单、HistoryStore 单测 9 例。常驻内存实测 26MB（红线 50MB）。Todolist 见 [docs/003-features.md](docs/003-features.md)；UI 定稿见 [docs/004-ui-options.md](docs/004-ui-options.md)，权威 token 在 [docs/ui/tokens.md](docs/ui/tokens.md)。阶段 5 分发已搁置（需付费开发者账号，用户决定不开通；定位个人自用，本机 Apple Development 签名长期使用）。**规划内功能已全部完成**，后续为按需迭代。
+**阶段 1-4 已完成**（2026-07-17）：采集/回填（文本/图片/文件）、双栏面板、搜索筛选、热键、设置页（快捷键/保留策略/隐私/排除应用/自启/存储/清空）、右键菜单、单元测试 11 例。常驻内存实测 26MB（红线 50MB）。Todolist 见 [docs/003-features.md](docs/003-features.md)；UI 定稿见 [docs/004-ui-options.md](docs/004-ui-options.md)，权威 token 在 [docs/ui/tokens.md](docs/ui/tokens.md)。阶段 5 分发已搁置（需付费开发者账号，用户决定不开通；定位个人自用，本机 Apple Development 签名长期使用）。**规划内功能已全部完成**，后续为按需迭代。
 
 ## 常用命令
 
