@@ -21,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var store: HistoryStore!
     private var clipboardMonitor: ClipboardMonitor!
     private var panelController: PanelController!
+    private var settingsController: SettingsWindowController!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
@@ -33,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         clipboardMonitor = ClipboardMonitor(store: store)
         panelController = PanelController(store: store, clipboardMonitor: clipboardMonitor)
+        settingsController = SettingsWindowController(store: store)
         clipboardMonitor.start()
         store.prune(days: Preferences.retentionDays, maxCount: Preferences.maxItemCount)
         ImageStore.shared.cleanupOrphans(referenced: store.referencedImagePaths())
@@ -75,6 +77,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         openItem.target = self
         menu.addItem(openItem)
         menu.addItem(.separator())
+        let settingsItem = NSMenuItem(title: "设置…", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
         let axItem = NSMenuItem(title: "启用回填粘贴（辅助功能）…", action: #selector(openAccessibility), keyEquivalent: "")
         axItem.target = self
         menu.addItem(axItem)
@@ -90,6 +95,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openAccessibility() {
         PasteService.openAccessibilitySettings()
     }
+
+    @objc private func openSettings() {
+        settingsController.show()
+    }
 }
 
 enum Preferences {
@@ -103,5 +112,9 @@ enum Preferences {
     }
     static var recordConcealed: Bool {
         UserDefaults.standard.object(forKey: "recordConcealed") as? Bool ?? true
+    }
+    static var excludedBundleIDs: [String] {
+        get { UserDefaults.standard.stringArray(forKey: "excludedBundleIDs") ?? [] }
+        set { UserDefaults.standard.set(newValue, forKey: "excludedBundleIDs") }
     }
 }

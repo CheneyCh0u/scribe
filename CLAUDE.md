@@ -33,13 +33,14 @@ Scribe/            # 应用源码
 
 ## 当前进度
 
-**阶段 1、2、3 已完成**（2026-07-17）：文本/图片/文件采集与回填、双栏面板、搜索筛选、热键、空格大图预览全部落地；常驻内存实测 26MB（红线 50MB）。Todolist 见 [docs/003-features.md](docs/003-features.md)；UI 定稿见 [docs/004-ui-options.md](docs/004-ui-options.md)，权威 token 在 [docs/ui/tokens.md](docs/ui/tokens.md)。下一步：阶段 4 设置页与打磨（设置窗口、右键菜单、清空、存储占用、单测）。
+**阶段 1-4 已完成**（2026-07-17）：采集/回填（文本/图片/文件）、双栏面板、搜索筛选、热键、设置页（快捷键/保留策略/隐私/排除应用/自启/存储/清空）、右键菜单、HistoryStore 单测 9 例。常驻内存实测 26MB（红线 50MB）。Todolist 见 [docs/003-features.md](docs/003-features.md)；UI 定稿见 [docs/004-ui-options.md](docs/004-ui-options.md)，权威 token 在 [docs/ui/tokens.md](docs/ui/tokens.md)。剩余：阶段 5 分发（Developer ID 签名公证 + Sparkle 自动更新，需付费开发者账号）。
 
 ## 常用命令
 
 ```bash
 xcodegen generate        # project.yml → Scribe.xcodeproj（xcodeproj 不入库，改工程结构改 project.yml）
 xcodebuild -project Scribe.xcodeproj -scheme Scribe -configuration Debug build
+xcodebuild -project Scribe.xcodeproj -scheme Scribe -configuration Debug test   # HistoryStore 单测
 open ~/Library/Developer/Xcode/DerivedData/Scribe-*/Build/Products/Debug/Scribe.app
 ```
 

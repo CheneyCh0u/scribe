@@ -13,6 +13,18 @@ packages:
     url: https://github.com/sindresorhus/KeyboardShortcuts
     from: 2.2.2
 
+schemes:
+  Scribe:
+    build:
+      targets:
+        Scribe: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - ScribeTests
+
 targets:
   Scribe:
     type: application
@@ -42,3 +54,19 @@ targets:
         DEVELOPMENT_TEAM: 9RHHPPZJNY
         ENABLE_HARDENED_RUNTIME: false
         COMBINE_HIDPI_IMAGES: true
+
+  ScribeTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - ScribeTests
+    dependencies:
+      - target: Scribe
+    settings:
+      base:
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: true
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 9RHHPPZJNY
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Scribe.app/Contents/MacOS/Scribe
+        BUNDLE_LOADER: $(TEST_HOST)

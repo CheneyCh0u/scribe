@@ -219,6 +219,16 @@ final class HistoryStore {
         }
     }
 
+    /// 清空全部历史（含置顶与图片文件），不可恢复。
+    func clearAll() {
+        let imagePaths = referencedImagePaths()
+        _ = try? dbQueue.write { db in
+            try ClipItem.deleteAll(db)
+        }
+        ImageStore.shared?.deleteFiles(imagePaths: Array(imagePaths))
+        notifyChanged()
+    }
+
     /// 孤儿清理用：DB 当前引用的所有图片文件名。
     func referencedImagePaths() -> Set<String> {
         let paths = (try? dbQueue.read { db in
@@ -305,7 +315,7 @@ final class HistoryStore {
             let searchClause = conditions.isEmpty ? "" : " AND " + conditions.joined(separator: " AND ")
 
             let pinned = try ClipItem.fetchAll(db, sql: """
-                SELECT * FROM item WHERE pinned = 1\(searchClause) ORDER BY lastUsedAt DESC
+                SELECT * FROM item WHERE pinned = 1\(searchClause) ORDER BY lastUsedAt DESC, id DESC
                 """, arguments: StatementArguments(arguments))
 
             var timeClause = ""
@@ -318,7 +328,7 @@ final class HistoryStore {
             otherArguments.append(limit)
             let others = try ClipItem.fetchAll(db, sql: """
                 SELECT * FROM item WHERE pinned = 0\(searchClause)\(timeClause)
-                ORDER BY lastUsedAt DESC LIMIT ?
+                ORDER BY lastUsedAt DESC, id DESC LIMIT ?
                 """, arguments: StatementArguments(otherArguments))
 
             return FetchResult(pinned: pinned, others: others)
@@ -338,6 +348,15 @@ final class HistoryStore {
     static func hash(of text: String) -> String {
         SHA256.hash(data: Data(text.utf8)).map { String(format: "%02x", $0) }.joined()
     }
+
+#if DEBUG
+    /// 仅测试用：直接改写 lastUsedAt。
+    func debugSetLastUsed(id: Int64, date: Date) {
+        try? dbQueue.write { db in
+            try db.execute(sql: "UPDATE item SET lastUsedAt = ? WHERE id = ?", arguments: [date, id])
+        }
+    }
+#endif
 
     private func notifyChanged() {
         DispatchQueue.main.async {

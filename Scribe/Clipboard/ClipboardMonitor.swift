@@ -52,6 +52,7 @@ final class ClipboardMonitor {
             bundleID = Bundle.main.bundleIdentifier
             appName = "Scribe"
         }
+        if let bundleID, Preferences.excludedBundleIDs.contains(bundleID) { return }
 
         // 类型优先级：文件引用 > 图片 > 文本
         if types.contains(.fileURL),

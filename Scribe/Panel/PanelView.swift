@@ -64,6 +64,30 @@ struct PanelView: View {
                                     // 双击 = 回填粘贴
                                     model.pasteSelected()
                                 }
+                                .contextMenu {
+                                    Button("粘贴") {
+                                        model.selectedID = item.id
+                                        model.pasteSelected()
+                                    }
+                                    Button("以纯文本粘贴") {
+                                        model.selectedID = item.id
+                                        model.pasteSelected(plainText: true)
+                                    }
+                                    Button("仅复制") {
+                                        model.selectedID = item.id
+                                        model.copySelected()
+                                    }
+                                    Divider()
+                                    Button(item.pinned ? "取消置顶" : "置顶") {
+                                        model.selectedID = item.id
+                                        model.togglePinSelected()
+                                    }
+                                    Divider()
+                                    Button("删除", role: .destructive) {
+                                        model.selectedID = item.id
+                                        model.deleteSelected()
+                                    }
+                                }
                         }
                     }
                 }
