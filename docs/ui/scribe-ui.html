@@ -97,31 +97,34 @@
 
   /* ═══════════ 主面板：双栏 ═══════════ */
   .panel{
-    width:720px; font-size:var(--text-body); color:var(--text-1);
+    width:840px; font-size:var(--text-body); color:var(--text-1);
     background:var(--panel-bg);
     -webkit-backdrop-filter:blur(38px) saturate(1.8); backdrop-filter:blur(38px) saturate(1.8);
     border-radius:22px;
     box-shadow:0 20px 60px rgba(0,0,0,0.34), 0 0 0 0.5px rgba(0,0,0,0.18);
     margin:32px 0; overflow:hidden;
   }
-  .panel .top{ padding:14px 16px 11px; border-bottom:1px solid var(--divider); }
+  .panel .top{
+    display:flex; align-items:center; gap:12px;
+    padding:13px 16px 11px; border-bottom:1px solid var(--divider);
+  }
   .panel .field{
     /* 聚焦式无框搜索：图标 + 大字号，无底色 */
-    display:flex; align-items:center; gap:9px; padding:2px 2px 6px;
+    flex:1; display:flex; align-items:center; gap:9px;
     color:var(--text-3); font-size:16px;
   }
   .panel .field .icon{ color:var(--text-2); }
-  .panel .chips{ display:flex; gap:8px; margin-top:8px; }
-  .chip{
-    font-size:var(--text-label); padding:4px 12px; border-radius:999px;
-    color:var(--text-1); background:var(--chip-bg); box-shadow:var(--chip-shadow);
+  .filterdd{
+    /* 时间筛选下拉：低频功能，安静角标（点开原生菜单） */
+    font-size:var(--text-label); color:var(--text-2);
+    padding:3px 9px; border-radius:6px; flex:none;
     transition:background-color var(--dur-fast) var(--ease-out);
   }
-  .chip:hover{ background:var(--row-hover); }
-  .chip.on{ background:var(--chip-on-bg); box-shadow:none; font-weight:600; }
+  .filterdd:hover{ background:var(--row-hover); }
+  .filterdd .chev{ font-size:9px; opacity:0.7; }
 
-  .panel .body{ display:flex; height:330px; }
-  .panel .listcol{ width:296px; flex:none; padding:4px 8px; border-right:1px solid var(--divider); overflow:hidden; }
+  .panel .body{ display:flex; height:454px; }
+  .panel .listcol{ width:320px; flex:none; padding:4px 8px; border-right:1px solid var(--divider); overflow:hidden; }
   .group{
     font-size:var(--text-caption); font-weight:600; color:var(--text-3);
     padding:9px 8px 4px; letter-spacing:0.02em;
@@ -227,19 +230,17 @@
   <h1>Scribe · UI 定稿</h1>
   <p>方向：<b>A 系统原生材质 × B 双栏布局</b>，深浅双模式随系统切换，材质/色值/透明度按
      <b>macOS 聚焦（Spotlight）实拍取样</b>：近白高透重模糊、大圆角、选中为安静灰（不用强调色反白）、
-     白色胶囊 chips、无框搜索。左列表右详情，720×420pt 居中唤起。权威 token 规格在 <b>docs/ui/tokens.md</b>，本页为视觉原型（与其同步维护）。悬停可看交互状态。</p>
+     无框搜索、时间筛选为搜索行右侧下拉（低频功能不占整行）。左列表右详情，840×540pt 居中唤起。
+     权威 token 规格在 <b>docs/ui/tokens.md</b>，本页为视觉原型（与其同步维护）。悬停可看交互状态。</p>
 </header>
 
-<h2>主面板 · 720×420pt · 浅色</h2>
+<h2>主面板 · 840×540pt · 浅色</h2>
 <div class="light">
-<div class="desktop" style="height:520px;">
+<div class="desktop" style="height:660px;">
   <div class="panel">
     <div class="top">
       <div class="field"><span class="icon">⌕</span><span>搜索剪贴板历史</span></div>
-      <div class="chips">
-        <span class="chip on">全部</span><span class="chip">今天</span><span class="chip">昨天</span>
-        <span class="chip">本周</span><span class="chip">上周</span><span class="chip">本月</span>
-      </div>
+      <div class="filterdd">全部时间 <span class="chev">⌄</span></div>
     </div>
     <div class="body">
       <div class="listcol">
@@ -327,14 +328,11 @@
 
 <h2>主面板 · 深色（随系统自动切换）</h2>
 <div class="dark">
-<div class="desktop" style="height:520px;">
+<div class="desktop" style="height:660px;">
   <div class="panel">
     <div class="top">
       <div class="field"><span class="icon">⌕</span><span>搜索剪贴板历史</span></div>
-      <div class="chips">
-        <span class="chip on">全部</span><span class="chip">今天</span><span class="chip">昨天</span>
-        <span class="chip">本周</span><span class="chip">上周</span><span class="chip">本月</span>
-      </div>
+      <div class="filterdd">全部时间 <span class="chev">⌄</span></div>
     </div>
     <div class="body">
       <div class="listcol">
@@ -511,8 +509,7 @@
   <tr><td><code>panel.background</code></td><td><span class="sw" style="background:#fcfbfa;"></span>rgba(252,251,250,0.82)+blur38 sat1.8</td><td><span class="sw" style="background:#1e1e22;"></span>rgba(30,30,34,0.80)+blur38</td><td>NSVisualEffectView(.popover/.fullScreenUI, .behindWindow)，以真机聚焦观感为准</td><td>系统材质（自动）</td></tr>
   <tr><td><code>row.selected</code></td><td>black @7.5%</td><td>white @9%</td><td>Asset「RowSelected」双值；<b>不用强调色反白</b></td><td>自定义（聚焦同款）</td></tr>
   <tr><td><code>row.hover</code></td><td>black @4.5%</td><td>white @5.5%</td><td>Asset「RowHover」双值</td><td>自定义</td></tr>
-  <tr><td><code>chip.background</code></td><td>white @80% + 阴影 0 1 2.5 @10%</td><td>white @10% + 描边 white @6%</td><td>Asset「ChipBg」双值 + .shadow</td><td>自定义（白胶囊）</td></tr>
-  <tr><td><code>chip.selected</code></td><td>black @9%，去阴影</td><td>white @18%</td><td>Asset「ChipOn」双值</td><td>自定义</td></tr>
+  <tr><td><code>filter.control</code></td><td colspan="2">无底色，hover 用 row.hover，radius 6；文字 text.secondary 12pt + chevron 8pt，非「全部」时文字换 accent</td><td>Menu(.button) + .plain</td><td>自定义（时间筛选下拉）</td></tr>
   <tr><td><code>keycap</code>（按键帽）</td><td>#FFF + 阴影 0 1 2 @14%</td><td>white @14%</td><td>Asset「Keycap」双值</td><td>自定义</td></tr>
   <tr><td><code>search.field</code></td><td colspan="2">无边框无底色，16pt，图标用 text.secondary，占位 text.tertiary</td><td>HStack + TextField(.plain)</td><td>聚焦式</td></tr>
   <tr><td><code>text.primary</code></td><td><span class="sw" style="background:#1c1c1e;"></span>#1C1C1E</td><td>white @90%</td><td>Color(nsColor:.labelColor)</td><td>系统色（自动）</td></tr>
@@ -524,7 +521,7 @@
   <tr><td><code>pin.indicator</code></td><td><span class="sw" style="background:#e6a23c;"></span>#E6A23C</td><td>同值</td><td>固定色</td><td>自定义</td></tr>
   <tr><td><code>danger</code></td><td><span class="sw" style="background:#e0382e;"></span>#E0382E</td><td><span class="sw" style="background:#ff6961;"></span>#FF6961</td><td>Color(nsColor:.systemRed)</td><td>系统色（自动）</td></tr>
   <tr><td><code>radius.panel / row / card / chip</code></td><td colspan="2">22 / 10 / 8 / 胶囊（聚焦大圆角）</td><td>RoundedRectangle 同值</td><td>原语</td></tr>
-  <tr><td><code>layout.panel</code></td><td colspan="2">720×420，列表栏 296，行高 46，设置窗 460</td><td>frame 同值</td><td>原语</td></tr>
+  <tr><td><code>layout.panel</code></td><td colspan="2">840×540，列表栏 320，行高 46，设置窗 460</td><td>frame 同值</td><td>原语</td></tr>
   <tr><td><code>spacing 刻度</code></td><td colspan="2">4 / 6 / 8 / 12 / 16 / 20</td><td>Spacing 枚举 s1-s6</td><td>原语</td></tr>
   <tr><td><code>font.search / title / body / label / caption</code></td><td colspan="2">16 / 15 / 13 / 12 / 11，SF Pro + PingFang SC；代码 SF Mono 12</td><td>.system(size:) / .monospaced()</td><td>原语</td></tr>
   <tr><td><code>motion.fast / base</code></td><td colspan="2">120ms / 180ms，cubic-bezier(0.16,1,0.3,1)；面板出现 scale 0.98→1 + fade</td><td>.easeOut(duration: 0.12 / 0.18)</td><td>原语</td></tr>

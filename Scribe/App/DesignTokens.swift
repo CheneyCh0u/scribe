@@ -21,8 +21,8 @@ enum Tokens {
     }
 
     enum Layout {
-        static let panelSize = CGSize(width: 720, height: 420)
-        static let listColumnWidth: CGFloat = 296
+        static let panelSize = CGSize(width: 840, height: 540)
+        static let listColumnWidth: CGFloat = 320
         static let settingsWidth: CGFloat = 460
     }
 
@@ -53,10 +53,6 @@ enum Tokens {
             light: NSColor(white: 0, alpha: 0.075), dark: NSColor(white: 1, alpha: 0.09))
         static let rowHover = dynamic("RowHover",
             light: NSColor(white: 0, alpha: 0.045), dark: NSColor(white: 1, alpha: 0.055))
-        static let chipBackground = dynamic("ChipBg",
-            light: NSColor(white: 1, alpha: 0.80), dark: NSColor(white: 1, alpha: 0.10))
-        static let chipSelected = dynamic("ChipOn",
-            light: NSColor(white: 0, alpha: 0.09), dark: NSColor(white: 1, alpha: 0.18))
         static let keycap = dynamic("Keycap",
             light: NSColor(white: 1, alpha: 1.0), dark: NSColor(white: 1, alpha: 0.14))
         static let surfaceCard = dynamic("SurfaceCard",

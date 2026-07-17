@@ -18,8 +18,7 @@
 | `panel.background` | rgba(252,251,250,0.82) + blur38 sat1.8 | rgba(30,30,34,0.80) + blur38 | NSVisualEffectView(.popover/.fullScreenUI, .behindWindow)，以真机聚焦观感为准 | 系统材质（自动） |
 | `row.selected` | black @7.5% | white @9% | Asset `RowSelected` | 自定义（聚焦同款） |
 | `row.hover` | black @4.5% | white @5.5% | Asset `RowHover` | 自定义 |
-| `chip.background` | white @80% + 阴影 0 1 2.5 @10% | white @10% + 描边 white @6% | Asset `ChipBg` + shadow | 自定义（白胶囊） |
-| `chip.selected` | black @9%（去阴影） | white @18% | Asset `ChipOn` | 自定义 |
+| `filter.control` | 无底色；hover 用 `row.hover`，radius 6 | 同左 | Menu(.button) + .plain，文字 text.secondary 12pt + chevron.down 8pt | 自定义（时间筛选下拉） |
 | `keycap` | #FFFFFF + 阴影 0 1 2 @14% | white @14% | Asset `Keycap` | 自定义 |
 | `surface.card`（预览底） | white @66% + 阴影 0 1 3 @8% | white @6% + 描边 white @6% | Asset `SurfaceCard` | 自定义 |
 | `text.primary` | #1C1C1E | white @90% | `.labelColor` | 系统（自动） |
@@ -43,8 +42,8 @@
 
 | token | 值 |
 |---|---|
-| `layout.panel` | 720 × 420 pt，屏幕居中唤起 |
-| `layout.listColumn` | 296 pt |
+| `layout.panel` | 840 × 540 pt，屏幕居中唤起 |
+| `layout.listColumn` | 320 pt |
 | `layout.rowHeight` | 46 pt |
 | `layout.settingsWindow` | 460 pt 宽 |
 | `spacing` 刻度 | 4 / 6 / 8 / 12 / 16 / 20（`Spacing.s1`-`s6`） |
@@ -73,5 +72,5 @@
 ## 交互速记
 
 - 选中行：安静灰填充，文字不反白，行右侧显示「粘贴」+ `↩` 按键帽。
-- chips：白胶囊常态，hover 灰化，选中灰填充加粗。
+- 时间筛选：搜索行右侧下拉（低频功能不占整行），常态显示当前值 + ⌄，hover 灰底，点开原生菜单勾选「全部/今天/昨天/本周/上周/本月」；非「全部」时文字换 accent 提示筛选生效中。
 - 键位：↑↓ 选择 · ↩ 粘贴 · ⇧↩ 纯文本 · ⌥↩ 仅复制 · ⌘1-9 快选 · ⌘P 置顶 · ⌫ 删除 · esc 关闭 · 空格图片预览。

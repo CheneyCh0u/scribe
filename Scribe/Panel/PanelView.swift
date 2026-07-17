@@ -24,26 +24,17 @@ struct PanelView: View {
     // MARK: - 顶部：搜索 + chips
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: Tokens.Space.s3) {
-            HStack(spacing: 9) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Tokens.Colors.textSecondary)
-                TextField("搜索剪贴板历史", text: $model.searchText)
-                    .textFieldStyle(.plain)
-                    .font(Tokens.Fonts.search)
-                    .focused($searchFocused)
-            }
-            .padding(.horizontal, 2)
-            HStack(spacing: Tokens.Space.s3) {
-                ForEach(TimeFilter.allCases) { filter in
-                    ChipView(title: filter.title, isOn: model.filter == filter) {
-                        model.filter = filter
-                    }
-                }
-            }
+        HStack(spacing: Tokens.Space.s4) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 14))
+                .foregroundStyle(Tokens.Colors.textSecondary)
+            TextField("搜索剪贴板历史", text: $model.searchText)
+                .textFieldStyle(.plain)
+                .font(Tokens.Fonts.search)
+                .focused($searchFocused)
+            FilterMenu(filter: $model.filter)
         }
-        .padding(.init(top: 14, leading: 16, bottom: 11, trailing: 16))
+        .padding(.init(top: 13, leading: 16, bottom: 11, trailing: 16))
     }
 
     // MARK: - 左栏列表
@@ -194,34 +185,42 @@ struct PanelView: View {
 
 // MARK: - 组件
 
-private struct ChipView: View {
-    var title: String
-    var isOn: Bool
-    var action: () -> Void
+/// 时间筛选下拉：低频功能，收成搜索行右侧的安静角标。
+private struct FilterMenu: View {
+    @Binding var filter: TimeFilter
     @State private var hovering = false
 
     var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(isOn ? Tokens.Fonts.label.weight(.semibold) : Tokens.Fonts.label)
-                .foregroundStyle(Tokens.Colors.textPrimary)
-                .padding(.init(top: 4, leading: 12, bottom: 4, trailing: 12))
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(fillColor)
-                        .shadow(color: (isOn || hovering) ? .clear : .black.opacity(0.10), radius: 1.25, y: 1)
-                )
+        Menu {
+            ForEach(TimeFilter.allCases) { option in
+                Button {
+                    filter = option
+                } label: {
+                    if option == filter {
+                        Label(option.title, systemImage: "checkmark")
+                    } else {
+                        Text(option.title)
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Text(filter == .all ? "全部时间" : filter.title)
+                    .font(Tokens.Fonts.label)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .semibold))
+                    .opacity(0.7)
+            }
+            .foregroundStyle(filter == .all ? AnyShapeStyle(Tokens.Colors.textSecondary) : AnyShapeStyle(Color.accentColor))
+            .padding(.init(top: 3, leading: 9, bottom: 3, trailing: 9))
+            .background(hovering ? Tokens.Colors.rowHover : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
         }
+        .menuStyle(.button)
         .buttonStyle(.plain)
+        .fixedSize()
         .onHover { hovering = $0 }
         .animation(Tokens.Motion.fast, value: hovering)
-        .animation(Tokens.Motion.fast, value: isOn)
-    }
-
-    private var fillColor: Color {
-        if isOn { return Tokens.Colors.chipSelected }
-        if hovering { return Tokens.Colors.rowHover }
-        return Tokens.Colors.chipBackground
     }
 }
 
