@@ -44,3 +44,7 @@ open ~/Library/Developer/Xcode/DerivedData/Scribe-*/Build/Products/Debug/Scribe.
 ```
 
 数据库位置：`~/Library/Application Support/Scribe/scribe.sqlite`（删除即重置）。
+
+## 已踩的坑
+
+- **TCC 授权按代码签名认应用**：曾用 ad-hoc 签名（`CODE_SIGN_IDENTITY: "-"`），每次构建签名都变，导致辅助功能授权在重新构建后失效（表面上还勾着，实际不生效）。已改为 Apple Development 稳定签名（project.yml：`DEVELOPMENT_TEAM: 9RHHPPZJNY`），授权一次持续有效。**不要改回 ad-hoc**；若换证书/改 Bundle ID，需 `tccutil reset Accessibility com.cheney.scribe` 后重新授权一次。
