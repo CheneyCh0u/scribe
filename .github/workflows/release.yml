@@ -1,0 +1,57 @@
+name: Release
+
+# 触发规则：推送 yyyy.mm.dd-sn 格式的 tag（sn 为当天第几次构建，从 1 起）
+# 打 tag 用 scripts/release.sh，自动计算当天序号
+on:
+  push:
+    tags:
+      - "[0-9][0-9][0-9][0-9].[0-9][0-9].[0-9][0-9]-[0-9]*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        run: xcodegen generate
+
+      # CI 无 Apple Development 证书，统一覆盖为 ad-hoc 签名
+      - name: Run tests
+        run: |
+          xcodebuild -project Scribe.xcodeproj -scheme Scribe -configuration Debug test \
+            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM=
+
+      - name: Build Release
+        run: |
+          xcodebuild -project Scribe.xcodeproj -scheme Scribe -configuration Release build \
+            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= \
+            SYMROOT="$PWD/build"
+
+      - name: Package
+        run: ditto -c -k --keepParent "build/Release/Scribe.app" "Scribe-${GITHUB_REF_NAME}.zip"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > notes.md <<'EOF'
+          macOS 历史剪贴板工具。⌘⇧V 唤起面板。
+
+          **首次打开说明**（本包为 ad-hoc 签名，未经 Apple 公证）：
+
+          ```bash
+          xattr -cr /Applications/Scribe.app
+          ```
+
+          或右键 → 打开。回填粘贴需在 系统设置 → 隐私与安全性 → 辅助功能 中授权；
+          注意：ad-hoc 签名每个版本不同，更新版本后需重新授权辅助功能。
+          EOF
+          gh release create "$GITHUB_REF_NAME" "Scribe-${GITHUB_REF_NAME}.zip" \
+            --title "Scribe $GITHUB_REF_NAME" --notes-file notes.md
