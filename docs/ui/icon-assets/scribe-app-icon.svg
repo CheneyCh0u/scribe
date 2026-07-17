@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <filter id="outer-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="26" stdDeviation="28" flood-color="#1c1c1e" flood-opacity=".22"/>
+    </filter>
+    <filter id="panel-shadow" x="-25%" y="-25%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#1c1c1e" flood-opacity=".16"/>
+    </filter>
+  </defs>
+  <g filter="url(#outer-shadow)">
+    <rect x="56" y="56" width="912" height="912" rx="216" fill="#f4f3f2"/>
+    <rect x="56" y="56" width="912" height="912" rx="216" fill="none" stroke="#fff" stroke-opacity=".72" stroke-width="6"/>
+  </g>
+  <g filter="url(#panel-shadow)">
+    <rect x="238" y="232" width="424" height="382" rx="70" fill="#dedddc"/>
+    <rect x="362" y="354" width="424" height="382" rx="70" fill="#fbfaf9"/>
+  </g>
+  <rect x="290" y="320" width="206" height="25" rx="12.5" fill="#8b8b90" opacity=".72"/>
+  <rect x="290" y="378" width="148" height="20" rx="10" fill="#8b8b90" opacity=".44"/>
+  <rect x="444" y="430" width="208" height="26" rx="13" fill="#8b8b90"/>
+  <rect x="444" y="492" width="154" height="22" rx="11" fill="#8b8b90" opacity=".64"/>
+  <path d="M651 328c78 20 132 91 132 173 0 98-80 178-178 178H351" fill="none" stroke="#0a7aff" stroke-width="49" stroke-linecap="round"/>
+  <path d="m405 619-61 60 61 60" fill="none" stroke="#0a7aff" stroke-width="49" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

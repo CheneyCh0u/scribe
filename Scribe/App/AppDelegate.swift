@@ -68,10 +68,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setUpStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.button?.image = NSImage(
-            systemSymbolName: "doc.on.clipboard",
-            accessibilityDescription: "Scribe"
-        )
+        let statusImage = (NSImage(named: "MenuBarIcon")?.copy() as? NSImage)
+            ?? NSImage(systemSymbolName: "doc.on.clipboard", accessibilityDescription: "Scribe")
+        statusImage?.isTemplate = true
+        statusImage?.size = NSSize(width: 18, height: 18)
+        statusItem.button?.image = statusImage
         let menu = NSMenu()
         let openItem = NSMenuItem(title: "打开面板", action: #selector(openPanel), keyEquivalent: "")
         openItem.target = self
