@@ -51,10 +51,13 @@ struct PanelView: View {
                         ForEach(section.items) { item in
                             RowView(item: item, isSelected: item.id == model.selectedID)
                                 .id(item.id)
-                                .onTapGesture {
-                                    // 单击 = 回填粘贴（与回车一致），浏览用 ↑↓
+                                .onTapGesture(count: 2) {
+                                    // 双击 = 回填粘贴；单击 = 选中查看详情
                                     model.selectedID = item.id
                                     model.pasteSelected()
+                                }
+                                .onTapGesture {
+                                    model.selectedID = item.id
                                 }
                         }
                     }
