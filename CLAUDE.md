@@ -33,7 +33,7 @@ Scribe/            # 应用源码
 
 ## 当前进度
 
-**阶段 1-4 已完成**（2026-07-17）：采集/回填（文本/图片/文件）、双栏面板、搜索筛选、热键、设置页（快捷键/保留策略/隐私/排除应用/自启/存储/清空）、右键菜单、HistoryStore 单测 9 例。常驻内存实测 26MB（红线 50MB）。Todolist 见 [docs/003-features.md](docs/003-features.md)；UI 定稿见 [docs/004-ui-options.md](docs/004-ui-options.md)，权威 token 在 [docs/ui/tokens.md](docs/ui/tokens.md)。剩余：阶段 5 分发（Developer ID 签名公证 + Sparkle 自动更新，需付费开发者账号）。
+**阶段 1-4 已完成**（2026-07-17）：采集/回填（文本/图片/文件）、双栏面板、搜索筛选、热键、设置页（快捷键/保留策略/隐私/排除应用/自启/存储/清空）、右键菜单、HistoryStore 单测 9 例。常驻内存实测 26MB（红线 50MB）。Todolist 见 [docs/003-features.md](docs/003-features.md)；UI 定稿见 [docs/004-ui-options.md](docs/004-ui-options.md)，权威 token 在 [docs/ui/tokens.md](docs/ui/tokens.md)。阶段 5 分发已搁置（需付费开发者账号，用户决定不开通；定位个人自用，本机 Apple Development 签名长期使用）。**规划内功能已全部完成**，后续为按需迭代。
 
 ## 常用命令
 
