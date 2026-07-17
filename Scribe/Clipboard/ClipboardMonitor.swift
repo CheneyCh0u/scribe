@@ -45,10 +45,14 @@ final class ClipboardMonitor {
         if isConcealed && !Preferences.recordConcealed { return }
 
         guard let text = pasteboard.string(forType: .string) else { return }
+        // RTF 原文另存用于保真回填（1MB 以内，超大富文本退化为纯文本）
+        var rtfData = pasteboard.data(forType: .rtf)
+        if let data = rtfData, data.count > 1_000_000 { rtfData = nil }
 
         let app = NSWorkspace.shared.frontmostApplication
         store.record(
             text: text,
+            rtfData: rtfData,
             appBundleID: app?.bundleIdentifier,
             appName: app?.localizedName,
             isConcealed: isConcealed

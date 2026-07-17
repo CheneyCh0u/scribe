@@ -51,12 +51,10 @@ struct PanelView: View {
                         ForEach(section.items) { item in
                             RowView(item: item, isSelected: item.id == model.selectedID)
                                 .id(item.id)
-                                .onTapGesture(count: 2) {
-                                    model.selectedID = item.id
-                                    model.copySelected()
-                                }
                                 .onTapGesture {
+                                    // 单击 = 回填粘贴（与回车一致），浏览用 ↑↓
                                     model.selectedID = item.id
+                                    model.pasteSelected()
                                 }
                         }
                     }
@@ -156,6 +154,8 @@ struct PanelView: View {
         HStack(spacing: 14) {
             hint("↑↓", "选择")
             hint("↩", "粘贴")
+            hint("⇧↩", "纯文本")
+            hint("⌥↩", "仅复制")
             hint("⌘1-9", "快选")
             hint("⌘⌫", "删除")
             hint("esc", "关闭")

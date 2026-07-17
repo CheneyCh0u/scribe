@@ -82,13 +82,29 @@ final class PanelModel: ObservableObject {
         selectedID = flat[index].id
     }
 
-    /// 阶段 1：复制到剪贴板并关闭面板（阶段 2 升级为回填粘贴）。
+    /// 回填粘贴（↩ / 单击 / ⌘1-9）：写回剪贴板 → 关面板 → 模拟 ⌘V。
+    /// 未授权辅助功能时降级为仅复制，并弹一次系统授权引导。
+    func pasteSelected(plainText: Bool = false) {
+        guard let item = selectedItem, let id = item.id else { return }
+        PasteService.writeToPasteboard(item, plainText: plainText, monitor: clipboardMonitor)
+        store.bumpUsed(id: id)
+        onRequestClose?()
+        if PasteService.isTrusted {
+            PasteService.sendPasteKeystroke()
+        } else {
+            let promptedKey = "axPromptShown"
+            if !UserDefaults.standard.bool(forKey: promptedKey) {
+                UserDefaults.standard.set(true, forKey: promptedKey)
+                PasteService.promptForPermission()
+            }
+            // 降级：内容已在剪贴板，用户可手动 ⌘V
+        }
+    }
+
+    /// 仅复制到剪贴板（⌥↩），不模拟粘贴。
     func copySelected() {
         guard let item = selectedItem, let id = item.id else { return }
-        clipboardMonitor.suppressNextChange()
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(item.content, forType: .string)
+        PasteService.writeToPasteboard(item, plainText: false, monitor: clipboardMonitor)
         store.bumpUsed(id: id)
         onRequestClose?()
     }

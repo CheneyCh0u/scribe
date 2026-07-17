@@ -33,7 +33,7 @@ Scribe/            # 应用源码
 
 ## 当前进度
 
-**阶段 1 MVP 已完成**（2026-07-17，文本采集→分组面板→搜索筛选→热键全链路已真机验证）。Todolist 见 [docs/003-features.md](docs/003-features.md)；UI 定稿见 [docs/004-ui-options.md](docs/004-ui-options.md)，权威 token 在 [docs/ui/tokens.md](docs/ui/tokens.md)。下一步：阶段 2 回填粘贴（CGEvent ⌘V + Accessibility 引导）。
+**阶段 1、2 已完成**（2026-07-17）。阶段 1 全链路真机验证过；阶段 2（回填粘贴：CGEvent ⌘V、RTF 保真、⇧↩/⌥↩、单击即粘贴、授权引导与降级）代码完成，粘贴动作待用户授权辅助功能后人工验收。Todolist 见 [docs/003-features.md](docs/003-features.md)；UI 定稿见 [docs/004-ui-options.md](docs/004-ui-options.md)，权威 token 在 [docs/ui/tokens.md](docs/ui/tokens.md)。下一步：阶段 3 图片与文件。
 
 ## 常用命令
 

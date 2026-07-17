@@ -96,12 +96,17 @@ final class HistoryStore {
                 END;
                 """)
         }
+        migrator.registerMigration("v2-rtf") { db in
+            try db.alter(table: "item") { t in
+                t.add(column: "rtfData", .blob)
+            }
+        }
         return migrator
     }
 
     // MARK: - 写入
 
-    func record(text: String, appBundleID: String?, appName: String?, isConcealed: Bool) {
+    func record(text: String, rtfData: Data?, appBundleID: String?, appName: String?, isConcealed: Bool) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         let hash = Self.hash(of: text)
@@ -109,12 +114,14 @@ final class HistoryStore {
             try dbQueue.write { db in
                 if var existing = try ClipItem.filter(Column("contentHash") == hash).fetchOne(db) {
                     existing.lastUsedAt = Date()
+                    if let rtfData { existing.rtfData = rtfData }
                     try existing.update(db)
                 } else {
                     var item = ClipItem(
                         id: nil,
                         type: "text",
                         content: text,
+                        rtfData: rtfData,
                         preview: ClipItem.makePreview(text),
                         contentHash: hash,
                         appBundleID: appBundleID,

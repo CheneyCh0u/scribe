@@ -114,8 +114,12 @@ final class PanelController {
         case 125: // ↓
             model.moveSelection(by: 1)
             return true
-        case 36, 76: // ↩ / enter
-            model.copySelected()
+        case 36, 76: // ↩ / enter：粘贴；⇧↩ 纯文本粘贴；⌥↩ 仅复制
+            if event.modifierFlags.contains(.option) {
+                model.copySelected()
+            } else {
+                model.pasteSelected(plainText: event.modifierFlags.contains(.shift))
+            }
             return true
         case 53: // esc
             hide()
@@ -134,7 +138,7 @@ final class PanelController {
             }
             if let digit = Int(chars), (1...9).contains(digit) {
                 model.selectVisibleIndex(digit - 1)
-                model.copySelected()
+                model.pasteSelected()
                 return true
             }
         }

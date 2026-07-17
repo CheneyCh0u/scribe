@@ -54,12 +54,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         openItem.target = self
         menu.addItem(openItem)
         menu.addItem(.separator())
+        let axItem = NSMenuItem(title: "启用回填粘贴（辅助功能）…", action: #selector(openAccessibility), keyEquivalent: "")
+        axItem.target = self
+        menu.addItem(axItem)
+        menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "退出 Scribe", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
     }
 
     @objc private func openPanel() {
         panelController.toggle()
+    }
+
+    @objc private func openAccessibility() {
+        PasteService.openAccessibilitySettings()
     }
 }
 

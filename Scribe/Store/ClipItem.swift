@@ -7,6 +7,7 @@ struct ClipItem: Identifiable, Equatable, Codable, FetchableRecord, MutablePersi
     var id: Int64?
     var type: String            // "text"（图片/文件在阶段 3 加入）
     var content: String
+    var rtfData: Data?          // 富文本原文，保真回填用；⇧↩ 纯文本粘贴时忽略
     var preview: String
     var contentHash: String
     var appBundleID: String?
