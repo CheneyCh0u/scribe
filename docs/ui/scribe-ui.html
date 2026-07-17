@@ -18,8 +18,8 @@
   /* ── 语义 token · 浅色（按系统聚焦 Spotlight 实拍取样）── */
   .light{
     --panel-bg: rgba(252,251,250,0.82);      /* 聚焦同款：近白高透 + 重模糊 */
-    --surface-card: rgba(255,255,255,0.66);
-    --surface-card-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --surface-card: rgba(0,0,0,0.045);       /* 轻灰内嵌：与选中行同灰阶，弃白 */
+    --surface-card-shadow: none;
     --accent: #0a7aff;                        /* systemBlue，仅用于链接等少量场景 */
     --accent-tint: rgba(10,122,255,0.14);
     --text-1: #1c1c1e;                        /* labelColor */
@@ -31,8 +31,8 @@
     --chip-bg: rgba(255,255,255,0.80);        /* 白色胶囊 + 细阴影 */
     --chip-shadow: 0 1px 2.5px rgba(0,0,0,0.10), 0 0 0 0.5px rgba(0,0,0,0.04);
     --chip-on-bg: rgba(0,0,0,0.09);
-    --keycap-bg: #ffffff;                     /* 选中行右侧按键帽 */
-    --keycap-shadow: 0 1px 2px rgba(0,0,0,0.14);
+    --keycap-bg: rgba(0,0,0,0.06);            /* 按键帽：灰底弃纯白 */
+    --keycap-shadow: none;
     --field-bg: rgba(0,0,0,0.05);
     --kbd-bg: rgba(0,0,0,0.07);
     --code-kw: #ad3da4; --code-str: #1c7a4d;  /* Xcode 浅色主题近似 */
@@ -48,8 +48,8 @@
   /* ── 语义 token · 深色（同一套语义，聚焦深色形态）── */
   .dark{
     --panel-bg: rgba(30,30,34,0.80);
-    --surface-card: rgba(255,255,255,0.06);
-    --surface-card-shadow: 0 0 0 1px rgba(255,255,255,0.06);
+    --surface-card: rgba(255,255,255,0.05);
+    --surface-card-shadow: none;
     --accent: #0a84ff;                        /* systemBlue 深色值 */
     --accent-tint: rgba(10,132,255,0.22);
     --text-1: rgba(255,255,255,0.90);
@@ -61,8 +61,8 @@
     --chip-bg: rgba(255,255,255,0.10);
     --chip-shadow: 0 0 0 0.5px rgba(255,255,255,0.06);
     --chip-on-bg: rgba(255,255,255,0.18);
-    --keycap-bg: rgba(255,255,255,0.14);
-    --keycap-shadow: 0 0 0 0.5px rgba(255,255,255,0.08);
+    --keycap-bg: rgba(255,255,255,0.12);
+    --keycap-shadow: none;
     --field-bg: rgba(255,255,255,0.07);
     --kbd-bg: rgba(255,255,255,0.10);
     --code-kw: #ff7ab2; --code-str: #7ec9a5;  /* Xcode 深色主题近似 */
@@ -510,14 +510,14 @@
   <tr><td><code>row.selected</code></td><td>black @7.5%</td><td>white @9%</td><td>Asset「RowSelected」双值；<b>不用强调色反白</b></td><td>自定义（聚焦同款）</td></tr>
   <tr><td><code>row.hover</code></td><td>black @4.5%</td><td>white @5.5%</td><td>Asset「RowHover」双值</td><td>自定义</td></tr>
   <tr><td><code>filter.control</code></td><td colspan="2">无底色，hover 用 row.hover，radius 6；文字 text.secondary 12pt + chevron 8pt，非「全部」时文字换 accent</td><td>Menu(.button) + .plain</td><td>自定义（时间筛选下拉）</td></tr>
-  <tr><td><code>keycap</code>（按键帽）</td><td>#FFF + 阴影 0 1 2 @14%</td><td>white @14%</td><td>Asset「Keycap」双值</td><td>自定义</td></tr>
+  <tr><td><code>keycap</code>（按键帽）</td><td>black @6%（无阴影）</td><td>white @12%</td><td>Asset「Keycap」双值</td><td>自定义（弃纯白）</td></tr>
   <tr><td><code>search.field</code></td><td colspan="2">无边框无底色，16pt，图标用 text.secondary，占位 text.tertiary</td><td>HStack + TextField(.plain)</td><td>聚焦式</td></tr>
   <tr><td><code>text.primary</code></td><td><span class="sw" style="background:#1c1c1e;"></span>#1C1C1E</td><td>white @90%</td><td>Color(nsColor:.labelColor)</td><td>系统色（自动）</td></tr>
   <tr><td><code>text.secondary</code></td><td>rgba(60,60,67,.60)</td><td>rgba(235,235,245,.60)</td><td>.secondaryLabelColor</td><td>系统色（自动）</td></tr>
   <tr><td><code>text.tertiary</code></td><td>rgba(60,60,67,.33)</td><td>rgba(235,235,245,.32)</td><td>.tertiaryLabelColor</td><td>系统色（自动）</td></tr>
   <tr><td><code>divider</code></td><td>black @6%</td><td>white @7%</td><td>Color(nsColor:.separatorColor)</td><td>系统色（自动）</td></tr>
   <tr><td><code>accent</code></td><td><span class="sw" style="background:#0a7aff;"></span>#0A7AFF</td><td><span class="sw" style="background:#0a84ff;"></span>#0A84FF</td><td>Color.accentColor；<b>仅用于链接/焦点环/设置选中标签</b>，不用于列表选中态</td><td>系统色（自动）</td></tr>
-  <tr><td><code>surface.card</code>（预览底）</td><td>white @66% + 阴影 0 1 3 @8%</td><td>white @6% + 描边 white @6%</td><td>Asset「SurfaceCard」双值</td><td>自定义</td></tr>
+  <tr><td><code>surface.card</code>（预览底）</td><td>black @4.5%（无边框无阴影）</td><td>white @5%</td><td>Asset「SurfaceCard」双值</td><td>自定义（轻灰内嵌，与选中行同灰阶）</td></tr>
   <tr><td><code>pin.indicator</code></td><td><span class="sw" style="background:#e6a23c;"></span>#E6A23C</td><td>同值</td><td>固定色</td><td>自定义</td></tr>
   <tr><td><code>danger</code></td><td><span class="sw" style="background:#e0382e;"></span>#E0382E</td><td><span class="sw" style="background:#ff6961;"></span>#FF6961</td><td>Color(nsColor:.systemRed)</td><td>系统色（自动）</td></tr>
   <tr><td><code>radius.panel / row / card / chip</code></td><td colspan="2">22 / 10 / 8 / 胶囊（聚焦大圆角）</td><td>RoundedRectangle 同值</td><td>原语</td></tr>

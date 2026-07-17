@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scribe · 右栏内容底方案对比</title>
+<style>
+  :root{
+    --font-ui: -apple-system, "SF Pro Text", "PingFang SC", sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ -webkit-font-smoothing:antialiased; }
+  body{ font-family:var(--font-ui); background:#101014; color:rgba(255,255,255,0.88);
+    line-height:1.7; padding:48px 24px 96px; }
+  .page{ max-width:1240px; margin:0 auto; }
+  h1{ font-size:24px; font-weight:700; letter-spacing:-0.012em; }
+  .page > p{ color:rgba(255,255,255,0.55); font-size:14px; margin-top:8px; max-width:68ch; }
+  h2{ font-size:17px; font-weight:700; margin-top:52px; }
+  h2 small{ font-weight:400; font-size:13px; color:rgba(255,255,255,0.5); margin-left:10px; }
+  .duo{ display:flex; gap:20px; flex-wrap:wrap; margin-top:14px; }
+
+  /* 迷你面板骨架（只保留右栏 + 提示条的语境） */
+  .frame{
+    width:580px; height:330px; border-radius:12px; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    outline:1px solid rgba(255,255,255,0.08); outline-offset:-1px;
+  }
+  .frame.l{ background:radial-gradient(120% 90% at 20% 10%, #e8d9c8 0%, #c9b49d 45%, #8f7a64 100%); }
+  .frame.d{ background:radial-gradient(120% 90% at 80% 0%, #2c3242 0%, #1b1f2b 45%, #101218 100%); }
+
+  .mini{
+    width:520px; height:270px; border-radius:16px; overflow:hidden;
+    display:flex; flex-direction:column; font-size:12px;
+    box-shadow:0 16px 44px rgba(0,0,0,0.35), 0 0 0 0.5px rgba(0,0,0,0.18);
+    -webkit-backdrop-filter:blur(34px) saturate(1.8); backdrop-filter:blur(34px) saturate(1.8);
+  }
+  .l .mini{ background:rgba(252,251,250,0.82); color:#1c1c1e;
+    --t2:rgba(60,60,67,0.60); --t3:rgba(60,60,67,0.33); --dv:rgba(0,0,0,0.06);
+    --sel:rgba(0,0,0,0.075); }
+  .d .mini{ background:rgba(30,30,34,0.80); color:rgba(255,255,255,0.90);
+    --t2:rgba(235,235,245,0.60); --t3:rgba(235,235,245,0.32); --dv:rgba(255,255,255,0.07);
+    --sel:rgba(255,255,255,0.09); }
+
+  .mini .bd{ flex:1; display:flex; min-height:0; }
+  .mini .lst{ width:170px; flex:none; border-right:1px solid var(--dv); padding:8px; }
+  .mini .grp{ font-size:9px; font-weight:600; color:var(--t3); padding:2px 6px 4px; }
+  .mini .row{ padding:6px 8px; border-radius:8px; }
+  .mini .row.sel{ background:var(--sel); }
+  .mini .row .m{ font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mini .row .s{ font-size:9px; color:var(--t2); }
+  .mini .pv{ flex:1; padding:12px 14px; display:flex; flex-direction:column; gap:9px; min-width:0; }
+  .mini .content{
+    flex:1; border-radius:8px; padding:10px 12px; overflow:hidden;
+    font-family:var(--font-mono); font-size:10.5px; line-height:1.8;
+  }
+  .mini .meta{ display:grid; grid-template-columns:34px 1fr; gap:2px 10px; font-size:9.5px; }
+  .mini .meta dt{ color:var(--t3); } .mini .meta dd{ color:var(--t2); }
+  .mini .hints{ display:flex; gap:10px; padding:6px 12px; border-top:1px solid var(--dv);
+    font-size:9px; color:var(--t3); align-items:center; }
+  .mini .hints .grow{ flex:1; }
+  .kc{ font-size:8.5px; padding:1px 5px; border-radius:4px; color:var(--t2); }
+
+  /* ── 方案 A：完全融入（无内容底）── */
+  .optA .content{ padding:2px 2px; border-radius:0; }
+  .l .optA .kc{ background:rgba(0,0,0,0.06); }
+  .d .optA .kc{ background:rgba(255,255,255,0.12); }
+
+  /* ── 方案 B：轻灰内嵌（推荐）── */
+  .l .optB .content{ background:rgba(0,0,0,0.045); }
+  .d .optB .content{ background:rgba(255,255,255,0.05); }
+  .l .optB .kc{ background:rgba(0,0,0,0.06); }
+  .d .optB .kc{ background:rgba(255,255,255,0.12); }
+
+  /* ── 方案 C：细描边（无底色）── */
+  .l .optC .content{ box-shadow:inset 0 0 0 1px rgba(0,0,0,0.10); }
+  .d .optC .content{ box-shadow:inset 0 0 0 1px rgba(255,255,255,0.10); }
+  .l .optC .kc{ box-shadow:inset 0 0 0 1px rgba(0,0,0,0.12); }
+  .d .optC .kc{ box-shadow:inset 0 0 0 1px rgba(255,255,255,0.14); }
+
+  .note{ margin-top:10px; font-size:13px; color:rgba(255,255,255,0.6); max-width:70ch; }
+  .reco{ margin-top:40px; padding:14px 18px; border-radius:10px; font-size:13px;
+    background:rgba(227,162,92,0.08); outline:1px solid rgba(227,162,92,0.25); outline-offset:-1px;
+    color:rgba(255,255,255,0.75); max-width:76ch; }
+  .reco b{ color:#e3a25c; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>右栏内容底 · 三方案对比</h1>
+<p>问题：当前右栏内容卡是 white @66%，在暖色壁纸的毛玻璃上像一块突兀的白板；底部按键帽纯白同病。
+   三个方案均已同步修改按键帽（不再纯白），各含浅色/深色。</p>
+
+<!-- 方案 A -->
+<h2>A · 完全融入 <small>无内容底，文字直接落在毛玻璃上（聚焦同款）</small></h2>
+<div class="duo">
+  <div class="frame l"><div class="mini optA">
+    <div class="bd">
+      <div class="lst">
+        <div class="grp">今天</div>
+        <div class="row sel"><div class="m">paste-cover-BBB</div><div class="s">微信 · 15 字符</div></div>
+        <div class="row"><div class="m">中文子串搜索测试：漕溪…</div><div class="s">微信 · 17 字符</div></div>
+      </div>
+      <div class="pv">
+        <div class="content">paste-cover-BBB<br><br>let name = hash.map { … }.joined()</div>
+        <dl class="meta"><dt>来源</dt><dd>微信</dd><dt>时间</dt><dd>7月17日 18:18</dd><dt>类型</dt><dd>纯文本 · 15 字符</dd></dl>
+      </div>
+    </div>
+    <div class="hints"><span class="kc">↩</span> 粘贴 <span class="kc">esc</span> 关闭 <span class="grow"></span> 5 条</div>
+  </div></div>
+  <div class="frame d"><div class="mini optA">
+    <div class="bd">
+      <div class="lst">
+        <div class="grp">今天</div>
+        <div class="row sel"><div class="m">paste-cover-BBB</div><div class="s">微信 · 15 字符</div></div>
+        <div class="row"><div class="m">中文子串搜索测试：漕溪…</div><div class="s">微信 · 17 字符</div></div>
+      </div>
+      <div class="pv">
+        <div class="content">paste-cover-BBB<br><br>let name = hash.map { … }.joined()</div>
+        <dl class="meta"><dt>来源</dt><dd>微信</dd><dt>时间</dt><dd>7月17日 18:18</dd><dt>类型</dt><dd>纯文本 · 15 字符</dd></dl>
+      </div>
+    </div>
+    <div class="hints"><span class="kc">↩</span> 粘贴 <span class="kc">esc</span> 关闭 <span class="grow"></span> 5 条</div>
+  </div></div>
+</div>
+<p class="note">最像系统组件、零违和；代价是内容区没有边界感，短内容时右栏显得空，代码/长文的"块"感消失。</p>
+
+<!-- 方案 B -->
+<h2>B · 轻灰内嵌（推荐）<small>黑 4.5% / 白 5% 的浅井底，无边框无阴影</small></h2>
+<div class="duo">
+  <div class="frame l"><div class="mini optB">
+    <div class="bd">
+      <div class="lst">
+        <div class="grp">今天</div>
+        <div class="row sel"><div class="m">paste-cover-BBB</div><div class="s">微信 · 15 字符</div></div>
+        <div class="row"><div class="m">中文子串搜索测试：漕溪…</div><div class="s">微信 · 17 字符</div></div>
+      </div>
+      <div class="pv">
+        <div class="content">paste-cover-BBB<br><br>let name = hash.map { … }.joined()</div>
+        <dl class="meta"><dt>来源</dt><dd>微信</dd><dt>时间</dt><dd>7月17日 18:18</dd><dt>类型</dt><dd>纯文本 · 15 字符</dd></dl>
+      </div>
+    </div>
+    <div class="hints"><span class="kc">↩</span> 粘贴 <span class="kc">esc</span> 关闭 <span class="grow"></span> 5 条</div>
+  </div></div>
+  <div class="frame d"><div class="mini optB">
+    <div class="bd">
+      <div class="lst">
+        <div class="grp">今天</div>
+        <div class="row sel"><div class="m">paste-cover-BBB</div><div class="s">微信 · 15 字符</div></div>
+        <div class="row"><div class="m">中文子串搜索测试：漕溪…</div><div class="s">微信 · 17 字符</div></div>
+      </div>
+      <div class="pv">
+        <div class="content">paste-cover-BBB<br><br>let name = hash.map { … }.joined()</div>
+        <dl class="meta"><dt>来源</dt><dd>微信</dd><dt>时间</dt><dd>7月17日 18:18</dd><dt>类型</dt><dd>纯文本 · 15 字符</dd></dl>
+      </div>
+    </div>
+    <div class="hints"><span class="kc">↩</span> 粘贴 <span class="kc">esc</span> 关闭 <span class="grow"></span> 5 条</div>
+  </div></div>
+</div>
+<p class="note">与选中行同一套"灰阶語言"：不引入任何白色，只是把毛玻璃压深一档，边界感保留，深浅模式天然对称。</p>
+
+<!-- 方案 C -->
+<h2>C · 细描边 <small>无底色，1px 黑 10% / 白 10% 描边圈出内容区</small></h2>
+<div class="duo">
+  <div class="frame l"><div class="mini optC">
+    <div class="bd">
+      <div class="lst">
+        <div class="grp">今天</div>
+        <div class="row sel"><div class="m">paste-cover-BBB</div><div class="s">微信 · 15 字符</div></div>
+        <div class="row"><div class="m">中文子串搜索测试：漕溪…</div><div class="s">微信 · 17 字符</div></div>
+      </div>
+      <div class="pv">
+        <div class="content">paste-cover-BBB<br><br>let name = hash.map { … }.joined()</div>
+        <dl class="meta"><dt>来源</dt><dd>微信</dd><dt>时间</dt><dd>7月17日 18:18</dd><dt>类型</dt><dd>纯文本 · 15 字符</dd></dl>
+      </div>
+    </div>
+    <div class="hints"><span class="kc">↩</span> 粘贴 <span class="kc">esc</span> 关闭 <span class="grow"></span> 5 条</div>
+  </div></div>
+  <div class="frame d"><div class="mini optC">
+    <div class="bd">
+      <div class="lst">
+        <div class="grp">今天</div>
+        <div class="row sel"><div class="m">paste-cover-BBB</div><div class="s">微信 · 15 字符</div></div>
+        <div class="row"><div class="m">中文子串搜索测试：漕溪…</div><div class="s">微信 · 17 字符</div></div>
+      </div>
+      <div class="pv">
+        <div class="content">paste-cover-BBB<br><br>let name = hash.map { … }.joined()</div>
+        <dl class="meta"><dt>来源</dt><dd>微信</dd><dt>时间</dt><dd>7月17日 18:18</dd><dt>类型</dt><dd>纯文本 · 15 字符</dd></dl>
+      </div>
+    </div>
+    <div class="hints"><span class="kc">↩</span> 粘贴 <span class="kc">esc</span> 关闭 <span class="grow"></span> 5 条</div>
+  </div></div>
+</div>
+<p class="note">边界最明确、最"工具感"；但描边在毛玻璃上容易显得线条硬，和面板的柔和材质有点打架。</p>
+
+<div class="reco"><b>我的推荐：B 轻灰内嵌。</b>它不引入任何新颜色，只复用选中行的灰阶（黑 4.5% / 白 5%），
+白板感消失但内容区的边界还在；图片预览（阶段 3）放在浅井里也最自然。A 最纯粹但短内容时空旷，C 线条感偏硬。
+三案的按键帽统一改为灰底（浅色黑 6% / 深色白 12%），不再用纯白。</div>
+
+</div>
+</body>
+</html>

@@ -54,9 +54,9 @@ enum Tokens {
         static let rowHover = dynamic("RowHover",
             light: NSColor(white: 0, alpha: 0.045), dark: NSColor(white: 1, alpha: 0.055))
         static let keycap = dynamic("Keycap",
-            light: NSColor(white: 1, alpha: 1.0), dark: NSColor(white: 1, alpha: 0.14))
+            light: NSColor(white: 0, alpha: 0.06), dark: NSColor(white: 1, alpha: 0.12))
         static let surfaceCard = dynamic("SurfaceCard",
-            light: NSColor(white: 1, alpha: 0.66), dark: NSColor(white: 1, alpha: 0.06))
+            light: NSColor(white: 0, alpha: 0.045), dark: NSColor(white: 1, alpha: 0.05))
         static let pinIndicator = Color(nsColor: NSColor(srgbRed: 0.902, green: 0.635, blue: 0.235, alpha: 1)) // #E6A23C
 
         private static func dynamic(_ name: String, light: NSColor, dark: NSColor) -> Color {

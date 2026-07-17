@@ -19,8 +19,8 @@
 | `row.selected` | black @7.5% | white @9% | Asset `RowSelected` | 自定义（聚焦同款） |
 | `row.hover` | black @4.5% | white @5.5% | Asset `RowHover` | 自定义 |
 | `filter.control` | 无底色；hover 用 `row.hover`，radius 6 | 同左 | Menu(.button) + .plain，文字 text.secondary 12pt + chevron.down 8pt | 自定义（时间筛选下拉） |
-| `keycap` | #FFFFFF + 阴影 0 1 2 @14% | white @14% | Asset `Keycap` | 自定义 |
-| `surface.card`（预览底） | white @66% + 阴影 0 1 3 @8% | white @6% + 描边 white @6% | Asset `SurfaceCard` | 自定义 |
+| `keycap` | black @6%（无阴影） | white @12% | Asset `Keycap` | 自定义（2026-07-17 修订：弃纯白） |
+| `surface.card`（预览底） | black @4.5%（无边框无阴影） | white @5% | Asset `SurfaceCard` | 自定义（2026-07-17 修订：弃白色，轻灰内嵌与选中行同灰阶） |
 | `text.primary` | #1C1C1E | white @90% | `.labelColor` | 系统（自动） |
 | `text.secondary` | rgba(60,60,67,0.60) | rgba(235,235,245,0.60) | `.secondaryLabelColor` | 系统（自动） |
 | `text.tertiary` | rgba(60,60,67,0.33) | rgba(235,235,245,0.32) | `.tertiaryLabelColor` | 系统（自动） |
