@@ -26,6 +26,10 @@
 - **隐私**：`TransientType` 内容始终不记录；`ConcealedType`（密码类）默认记录但列表打码显示，用户可在设置中关闭记录（决策见 003）。
 - **语言**：提交信息、代码注释用英文；文档用中文。
 
+## 发布流程
+
+发布唯一入口是 `bash scripts/release.sh`（自动打 `yyyy.mm.dd-sn` tag 并推送，触发 GitHub Actions 构建挂 Release）。规则、限制与排查见 [005-ci-release.md](005-ci-release.md)。发布前确保 main 已推送、单测通过（流水线内也有测试门）。
+
 ## 实施节奏
 
 按 [002-architecture.md](002-architecture.md) 的四个阶段推进，每阶段独立可用、可合并；阶段完成后更新 CLAUDE.md 的「当前进度」。
