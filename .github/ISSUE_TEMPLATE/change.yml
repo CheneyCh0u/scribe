@@ -1,0 +1,89 @@
+name: 变更申请
+description: 用于功能、修复、文档、核心流程及其他所有仓库改动
+title: ""
+labels: []
+body:
+  - type: dropdown
+    id: change_type
+    attributes:
+      label: 变更类型
+      description: 选择与提交信息一致的主要类型。
+      options:
+        - feat
+        - fix
+        - docs
+        - core
+        - refactor
+        - test
+        - perf
+        - build
+        - ci
+        - chore
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: 背景与问题
+      description: 说明当前行为、问题或改动动机，并附必要证据。
+      placeholder: 当前发生了什么，为什么需要改？
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: 目标与范围
+      description: 写清要实现的结果，以及明确不包含的内容。
+      placeholder: |
+        目标：
+        - <填写目标>
+
+        不包含：
+        - <填写不包含范围>
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收标准
+      description: 使用可验证的完成条件。
+      placeholder: |
+        - [ ] <填写验收条件>
+        - [ ] <填写验收条件>
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: 影响范围
+      description: 列出代码、数据、UI、文档、兼容性或发布方面的影响。
+      placeholder: 受影响的模块、文件或用户行为
+    validations:
+      required: true
+
+  - type: textarea
+    id: risk
+    attributes:
+      label: 风险与回滚
+      description: 说明主要风险、验证方式和回滚路径；没有风险也需说明原因。
+      placeholder: |
+        风险：
+        验证：
+        回滚：
+    validations:
+      required: true
+
+  - type: dropdown
+    id: release
+    attributes:
+      label: 是否需要发布
+      description: 普通合并不会打 tag；只有明确选择需要时才进入独立发布流程。
+      options:
+        - 否
+        - 是，合并后单独发布
+    validations:
+      required: true

@@ -117,6 +117,8 @@ Scribe 使用 Swift 6 开发，以 AppKit 的非激活 `NSPanel` 承载面板，
 
 ## 开发
 
+任何改动都从 GitHub Issue 开始，并通过包含 Issue ID 的分支和关联 PR 进入 `main`。完整规范、分支命名、提交格式和自动关闭规则见 [Issue-first GitHub 工作流](docs/007-git-workflow.md)。
+
 ```bash
 xcodegen generate
 xcodebuild -project Scribe.xcodeproj -scheme Scribe -configuration Debug build
@@ -138,6 +140,7 @@ bash scripts/release.sh
 - [docs/003-features.md](docs/003-features.md)：功能清单与进度
 - [docs/004-ui-options.md](docs/004-ui-options.md)：UI 方案与定稿
 - [docs/006-icon-options.md](docs/006-icon-options.md)：应用图标与菜单栏图标方案
+- [docs/007-git-workflow.md](docs/007-git-workflow.md)：Issue、分支、提交与 PR 工作流
 - [docs/ui/tokens.md](docs/ui/tokens.md)：UI design token 的唯一权威来源
 - [docs/ui/icon-options.html](docs/ui/icon-options.html)：保留在项目内的图标方案选择页
 - [docs/process.md](docs/process.md)：开发流程与文档维护规则
