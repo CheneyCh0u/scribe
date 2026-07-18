@@ -50,7 +50,7 @@ struct PanelView: View {
                             .foregroundStyle(Tokens.Colors.textTertiary)
                             .padding(.init(top: 9, leading: 8, bottom: 4, trailing: 8))
                         ForEach(section.items) { item in
-                            RowView(item: item, isSelected: item.id == model.selectedID)
+                            RowView(item: item, selectedID: $model.selectedID)
                                 .id(item.id)
                                 // 按下立即选中（零距离 drag 在 mouse-down 触发，避免等双击判定的 ~250ms 延迟）
                                 .simultaneousGesture(
@@ -446,10 +446,16 @@ private struct FilterMenu: View {
     }
 }
 
-private struct RowView: View {
+struct RowView: View {
     var item: ClipItem
-    var isSelected: Bool
+    // Lazy rows can survive while the panel is hidden, so observe selection directly instead of caching a Bool snapshot.
+    @Binding var selectedID: Int64?
     @State private var hovering = false
+
+    var isSelected: Bool {
+        guard let itemID = item.id else { return false }
+        return itemID == selectedID
+    }
 
     var body: some View {
         HStack(spacing: 9) {
