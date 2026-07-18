@@ -108,7 +108,10 @@ final class HistoryStoreTests: XCTestCase {
         record(store, "today-item")
         record(store, "yesterday-item")
 
-        let yesterday = Calendar.current.date(byAdding: .hour, value: -30, to: Date())!
+        let calendar = Calendar.current
+        let todayStart = calendar.startOfDay(for: Date())
+        let yesterdayStart = calendar.date(byAdding: .day, value: -1, to: todayStart)!
+        let yesterday = calendar.date(byAdding: .hour, value: 12, to: yesterdayStart)!
         let item = store.fetch(filter: .all, query: "").others.first { $0.content == "yesterday-item" }!
         try store.debugSetLastUsed(id: item.id!, date: yesterday)
 
