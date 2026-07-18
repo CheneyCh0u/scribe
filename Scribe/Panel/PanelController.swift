@@ -7,6 +7,23 @@ private final class KeyPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
+enum PanelMask {
+    static func path(in rect: CGRect, cornerRadius: CGFloat) -> Path {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous).path(in: rect)
+    }
+
+    static func image(size: CGSize, cornerRadius: CGFloat) -> NSImage {
+        NSImage(size: size, flipped: false) { rect in
+            guard let context = NSGraphicsContext.current?.cgContext else { return false }
+            context.clear(rect)
+            context.addPath(path(in: rect, cornerRadius: cornerRadius).cgPath)
+            context.setFillColor(NSColor.white.cgColor)
+            context.fillPath()
+            return true
+        }
+    }
+}
+
 @MainActor
 final class PanelController {
     private let panel: KeyPanel
@@ -40,6 +57,10 @@ final class PanelController {
         effectView.blendingMode = .behindWindow
         effectView.state = .active
         effectView.wantsLayer = true
+        effectView.maskImage = PanelMask.image(
+            size: contentRect.size,
+            cornerRadius: Tokens.Radius.panel
+        )
         effectView.layer?.cornerRadius = Tokens.Radius.panel
         effectView.layer?.cornerCurve = .continuous
         effectView.layer?.masksToBounds = true
@@ -49,6 +70,7 @@ final class PanelController {
         hostingView.autoresizingMask = [.width, .height]
         effectView.addSubview(hostingView)
         panel.contentView = effectView
+        panel.invalidateShadow()
 
         model.onRequestClose = { [weak self] in self?.hide() }
 
