@@ -7,6 +7,11 @@ private final class KeyPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
+@MainActor
+final class MaterialHostingView<Content: View>: NSHostingView<Content> {
+    override var isOpaque: Bool { false }
+}
+
 enum PanelMask {
     static func path(in rect: CGRect, cornerRadius: CGFloat) -> Path {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous).path(in: rect)
@@ -65,9 +70,14 @@ final class PanelController {
         effectView.layer?.cornerCurve = .continuous
         effectView.layer?.masksToBounds = true
 
-        let hostingView = NSHostingView(rootView: PanelView(model: model))
+        let hostingView = MaterialHostingView(
+            rootView: PanelView(model: model).background(Color.clear)
+        )
         hostingView.frame = effectView.bounds
         hostingView.autoresizingMask = [.width, .height]
+        hostingView.wantsLayer = true
+        hostingView.layer?.isOpaque = false
+        hostingView.layer?.backgroundColor = NSColor.clear.cgColor
         effectView.addSubview(hostingView)
         panel.contentView = effectView
         panel.invalidateShadow()
