@@ -65,8 +65,8 @@ struct PanelView: View {
                                     model.selectedID = item.id
                                     return Self.dragProvider(for: item)
                                 }
-                                // 放在 onDrag 之后并提高优先级，避免双击被拖拽识别器抢占。
-                                .highPriorityGesture(
+                                // 与 onDrag 同时识别：首次按下负责选中，第二次点击负责回填。
+                                .simultaneousGesture(
                                     TapGesture(count: 2)
                                         .onEnded {
                                             model.selectedID = item.id
